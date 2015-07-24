@@ -1,0 +1,79 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>The HTML5 Herald</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+  
+  <!-- Toffle -->
+  <script src="toffle.min.js"></script>
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+ 
+	<div id="container"></div>
+	
+	<script id="temp1" type="text/plug-template">
+	
+		<h1>First Name</h1>
+		<p> <^ input.fName ^> is my name </p><br>
+		
+		<h2>Second Name</h2>
+		<p><^ input.sName ^></p><br>
+		
+		<h4>Pets:</h4>
+		<^ for pet in input.pets ^> 
+			<^ plug pet-template pet ^>
+		<^/^>
+		
+		<h3>Age</h3>
+		<p><^ input.age ^></p><br>
+		
+		<^ if input.age > 20 ^> I'm over 20! <^/^>
+	</script>
+	
+	<script id="pet-template" type="text/plug-template">
+		<hr>
+		<p>Name: <^ name ^></p>
+		<p>Cuteness Level: <^ cutenessLevel ^></p>
+		<hr>
+	</script>
+
+	<script>
+
+		// Test JSON
+		var json = {
+			fName:"Nikolas",
+			sName:"Howard",
+			age:25,
+			pets:[
+				{
+					name:"Wilfred",
+					cutenessLevel: 6
+				},
+				{
+					name:"Scrabbles",
+					cutenessLevel: 4
+				},
+				{
+					name:"Neighbour Cat",
+					cutenessLevel: 2
+				}
+			]
+		};
+
+		var mytemp = toffle.template(document.getElementById('temp1'));
+		var output = mytemp.go({ input: json }); 
+		document.getElementById('container').innerHTML = output;
+		
+	</script>
+	
+</body>
+</html>
