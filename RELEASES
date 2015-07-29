@@ -1,5 +1,9 @@
-{"employees":[
-    {"firstName":"John", "lastName":"Doe"},
-    {"firstName":"Anna", "lastName":"Smith"},
-    {"firstName":"Peter", "lastName":"Jones"}
+{"releases":[
+	{
+		"version":"1.0", 
+		"desc":"This is the initial release of toffle.js."
+	},{
+		"version":"1.2", 
+		"desc":"Second release of toffle.js."
+	}
 ]}
