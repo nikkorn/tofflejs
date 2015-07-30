@@ -341,6 +341,147 @@ toffle.template = function(template){
 			}
 			
 			return output;
+		},
+		
+		// Carries out a get/post ajax call to asynchronously remotely fetch JSON from elsewhere, compile it, process the templates
+		// and plug the output to a location (dropoff value in details parameter, if specified) when were done. Users can also add a 'finished'
+		// callback which we will pass the template output and fetched JSON to. 
+		goAway: function(details){
+			// check that we have been given our details object
+			if(!details)
+			{
+				throw "toffle: error! you must specify details for this function";
+			}
+			
+			// check that the user specified a url
+			if(!('url' in details))
+			{
+				throw "toffle: error! no url specified";
+			}
+			
+			// check that the user specified a url
+			if(!('type' in details))
+			{
+				throw "toffle: error! no type specified";
+			}
+			
+			// do our ajax request
+			try
+			{
+				var xmlhttp;
+				
+				if (window.XMLHttpRequest)
+				{
+					// code for IE7+, Firefox, Chrome, Opera, Safari
+					xmlhttp=new XMLHttpRequest();
+				}
+				else
+				{
+					// code for IE6, IE5
+					xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				
+				//  get a reference to this so we can reach 'handleAjaxError' in 'onreadystatechange'
+				var returnObj = this;
+					
+				xmlhttp.onreadystatechange = function()
+				{
+					if (xmlhttp.readyState==4 && xmlhttp.status==200)
+					{
+						// our response as JSON
+						var responseJSON;
+						
+						// attempt to parse our response text as JSON
+						try
+						{
+							// parse the response
+							responseJSON = JSON.parse(xmlhttp.responseText);
+						}
+						catch(err)
+						{
+							returnObj.handleAjaxError(details, err, "toffle: error parsing returned data as JSON");
+							return;
+						}
+						
+						// TODO check the details for a 'parse' function, if one is there then pass it the raw json.
+						// if the user has been good then they will have done their own manipulation on the json and returned the 
+						// json that we should actually use to generate our output.
+						
+						// our template output
+						var templateOutput;
+						
+						// now lets try to actually generate some HTML
+						try
+						{
+							templateOutput = returnObj.go(responseJSON);
+						}
+						catch(err)
+						{
+							returnObj.handleAjaxError(details, err, "toffle: error generating output");
+							return;
+						}
+						
+						// if the user has specified a dropoff, then fill that container with our template output
+						if('dropoff' in details)
+						{
+							// wrap this in a try, in case the user was naughty and didn't pass us a valid object
+							try
+							{
+								details.dropoff.innerHTML = templateOutput;
+							}
+							catch(err)
+							{
+								returnObj.handleAjaxError(details, err, "toffle: error! invalid dropoff");
+								return;
+							}
+						}
+						
+						// everything seems to have went well. If the user specified a 'finished' method then call it
+						if('finished' in details)
+						{
+							// pass our user the json with which we generated the output, and the output itself
+							details.finished({
+								responseJSON: responseJSON,
+								output: templateOutput
+							});
+						}
+					}
+				}
+
+				xmlhttp.open(details.type, details.url, true);
+				
+				if('data' in details && details.type.toUpperCase() == 'POST')
+				{
+					xmlhttp.send(details.data);
+				}
+				else 
+				{
+					xmlhttp.send();
+				}
+			}
+			catch(err)
+			{
+				this.handleAjaxError(details, err, "toffle: error carrying out ajax request");
+			}
+		},
+		
+		// A convenience method. Assumes that the input params is , at the top level, an array. Iterates over this array 
+		// rather than the user having to add a 'for' statement to the initial template.
+		goOver: function(inputParams){
+		
+		},
+		
+		handleAjaxError: function(details, error, message){
+			// something went wrong, call the user specified 'failed' function, if there is one.
+			if('failed' in details)
+			{
+				details.failed(error);
+			}
+			else
+			{
+				// If the user doesnt want to handle this by specifying a 'failed' callback, then just error.
+				throw message;
+			}
 		}
 	}
 	
