@@ -46,9 +46,6 @@ toffle.tokenType = {
 	}
 };
 
-// Reference for available JSON parameters.
-toffle.$ = {};
-
 // Compiled Templates
 toffle.templates = [];
 
@@ -146,7 +143,7 @@ toffle.template = function(template){
 					} 
 					else
 					{
-						// TODO If this context has any params, they need to be deleted.
+						// If this context has any params, they need to be deleted.
 						toffle.dropParams(context.params);
 						
 						// Re-raise any params that were overwritten by this context,
@@ -182,7 +179,7 @@ toffle.template = function(template){
 						}
 						catch(err)
 						{
-							// TODO add error handling
+							throw "toffle: error evaluating value '" + token.value + "'";
 						}
 						break;
 					
@@ -195,7 +192,7 @@ toffle.template = function(template){
 						}
 						catch(err)
 						{
-							// TODO add error handling
+							throw "toffle: error evaluating condition '" + token.condition + "'";
 						}
 						
 						// If 'true' then push a new context onto the stack.
@@ -223,7 +220,7 @@ toffle.template = function(template){
 						}
 						catch(err)
 						{
-							// TODO add error handling
+							throw "toffle: error evaluating condition '" + token.condition + "'";
 						}
 						
 						// If condition is false then push a new context onto the stack.
@@ -254,7 +251,7 @@ toffle.template = function(template){
 						}
 						catch(err)
 						{
-							// TODO add error handling
+							throw "toffle: error evaluating reference '" + token.reference + "'";
 						}
 						
 						// Push new context onto the stack.
@@ -285,7 +282,7 @@ toffle.template = function(template){
 						}
 						catch(err)
 						{
-							// TODO add error handling
+							throw "toffle: error setting variable";
 						}
 						break;
 						
@@ -594,12 +591,7 @@ toffle.tokenify = function(token, currentTemplate) {
 		
 		// SIMPLE REFERENCES
 		default:
-			//	var indexPattern = /\[(.*?)\]/g;
-			//	indexPattern.exec('<p>hello[1234]</p>') returns object {"[1234]","1234"} or null if no match
-			//
-			// find any indexing '[0]' and replace the contents with a placeholder.
-			// these contents themselves may be a path TO an index 'item.value.num[id[i]]' so 
-			// evaluate indexes recursively until there are no more indexes.
+			// Set our token type.
 			tokenObj = new toffle.tokenType.REF();
 			
 			// Set the token value.
@@ -654,19 +646,6 @@ toffle.generateTokenAST = function(template){
 
 	// Return our root token.
 	return tree[0];
-};
-
-toffle.setParamJSON = function(input, clearExistingParams){
-	// Clear all parameters
-	if(clearExistingParams)
-	{
-		toffle.$ = {};
-	}
-	
-	// Add params to the toffle.$ namespace
-	for (var key in input) {
-	  toffle.$[key] = input[key];
-	}
 };
 
 toffle.raiseParams = function(params){
