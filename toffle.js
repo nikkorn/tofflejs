@@ -46,15 +46,18 @@ toffle.tokenType = {
 	}
 };
 
-// Compiled Templates
-toffle.templates = [];
-
-// Identifiers of templates that are currently being processed
-toffle.pendingTemplates = [];
-
 toffle.template = function(template){
+	// Reference for available JSON parameters.
+	toffle.$ = {};
+	
+	// Compiled Templates
+	templates = [];
+
+	// Identifiers of templates that are currently being processed
+	pendingTemplates = [];
+
 	// Compile the template, and any subsequent referenced templates
-	toffle.compileTemplate(template, true);
+	toffle.compileTemplate(template, true, pendingTemplates, templates);
 	
 	var returnObject = {
 		templates: {},
@@ -486,11 +489,11 @@ toffle.template = function(template){
 	}
 	
 	// Add our templates to our returning object.
-	for(var i = 0; i < toffle.templates.length; i++)
+	for(var i = 0; i < templates.length; i++)
 	{
-		returnObject.templates[toffle.templates[i].name] = {
-			ast: toffle.templates[i].temp.AST,
-			isInitialTemplate: toffle.templates[i].temp.initialTemplate,
+		returnObject.templates[templates[i].name] = {
+			ast: templates[i].temp.AST,
+			isInitialTemplate: templates[i].temp.initialTemplate,
 			varList: []
 		};
 	}
@@ -498,7 +501,7 @@ toffle.template = function(template){
 	return returnObject;
 };
 
-toffle.compileTemplate = function(template, initialTemplate){
+toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, templates){
 
 	// Ensure that this template even exists in the document.
 	if(template == null)
@@ -515,7 +518,7 @@ toffle.compileTemplate = function(template, initialTemplate){
 	};
 	
 	// Add this templates id to the list of pending compilations as reference for when we wish to compile sub-referenced templates.
-	toffle.pendingTemplates.push(template.id);
+	pendingTemplates.push(template.id);
 
 	// Flag that defines when we've found an opening marker but not its accompanying closing marker.
 	var isTokenUnclosed = false;
@@ -549,7 +552,7 @@ toffle.compileTemplate = function(template, initialTemplate){
 			var newToken = currentTemplate.templateString.slice(openingTokenIndex, i);
 
 			// Parse the plain text token into an uppidt token.
-			newToken = toffle.tokenify(newToken, template.id);	
+			newToken = toffle.tokenify(newToken, template.id, pendingTemplates);	
 
 			newToken.tokenIndex = i - openingTokenIndex;		
 
@@ -586,13 +589,13 @@ toffle.compileTemplate = function(template, initialTemplate){
 	currentTemplate.AST = templateAST;
 
 	// Add this entry point template to the list of compiled templates
-	toffle.templates.push({
+	templates.push({
 		name: template.id,
 		temp: currentTemplate
 		});
 };
 
-toffle.tokenify = function(token, currentTemplate) {
+toffle.tokenify = function(token, currentTemplate, pendingTemplates) {
 	var tokenObj;
 
 	// First step is to determine if this token is a content closer.
@@ -622,9 +625,9 @@ toffle.tokenify = function(token, currentTemplate) {
 			// Compile this new template that we have found IF! it is not compiled and it is not the 
 			// template we are currently compiling,
 			var templateIsCompiled = false;
-			for (var z = 0; z < toffle.pendingTemplates.length; z++)
+			for (var z = 0; z < pendingTemplates.length; z++)
 			{
-				if(toffle.pendingTemplates[z] == tokenObj.template)
+				if(pendingTemplates[z] == tokenObj.template)
 				{
 					templateIsCompiled = true;
 					break;
@@ -632,7 +635,7 @@ toffle.tokenify = function(token, currentTemplate) {
 			}
 			if((tokenObj.template != currentTemplate) && !templateIsCompiled)
 			{
-				toffle.compileTemplate(referencedTemplate, false);
+				toffle.compileTemplate(referencedTemplate, false, pendingTemplates, templates);
 			}
 			
 			// Gather up all other subtokens as these make up the user defined parameters.
