@@ -30,7 +30,7 @@
 		
 		<h4>Pets:</h4>
 		<^ for pet in input.pets ^> 
-			<^ plug pet-template pet ^>
+			<^ plug pettemplate {"petInfo":"pet"} ^>
 		<^/^>
 		
 		<h3>Age</h3>
@@ -39,10 +39,10 @@
 		<^ if input.age > 20 ^> I'm over 20! <^/^>
 	</script>
 	
-	<script id="pet-template" type="text/plug-template">
+	<script id="pettemplate" type="text/plug-template">
 		<hr>
-		<p>Name: <^ name ^></p>
-		<p>Cuteness Level: <^ cutenessLevel ^></p>
+		<p>Name: <^ petInfo.name ^></p>
+		<p>Cuteness Level: <^ petInfo.cutenessLevel ^></p>
 		<hr>
 	</script>
 
