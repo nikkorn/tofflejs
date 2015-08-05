@@ -856,7 +856,7 @@ toffle.parseParam = function(param) {
 			var evaluatedValue = eval(param);
 
 			// We didn't blow up evaluating that input. Return our spoils.
-			return evaluatedValue;
+			return { param: evaluatedValue };
 		}
 		catch(err)
 		{
