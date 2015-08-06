@@ -808,60 +808,66 @@ toffle.parseParam = function(param) {
 	// Trim the input
 	param = param.trim();
 
-	// Check for literal object
-	if((param.charAt(0) == '{') && (param.charAt(param.length-1) == '}')) 
+	// Check for parenthesis
+	if((param.charAt(0) == '(') && (param.charAt(param.length-1) == ')')) 
 	{
-		// Parse the object (toffle will only permit one level of json for param lists)
-		param = JSON.parse(param);
+		// our output parameter object
+		var outputParams = {};
+		
+		//strip the parenthesis
+		param = param.substring(1, param.length - 1);
+		
+		// split the parameters on ","
+		var params = param.split(",");
 
 		// Iterate over each value in the parameters and attempt to evaluate each.
 		// set the actual value to be the output of the eval() method. This sounds crazy but if a value
 		// happens to be a string that represents another json object then this will replace the string
 		// with the actual object.
-		for (var key in param) 
+		for (var i = 0; i < params.length; i++) 
 		{
-			// Ensure the object literal has this property set.
-			if (param.hasOwnProperty(key)) 
+			// get current param and neaten it up
+			currentParam = params[i].trim();
+			
+			// try to split the param on the ":" caracter to see if it is aliased
+			currentParamSections = currentParam.split(":");
+			
+			// each param will have an alias, make sure we have one
+			if(currentParamSections.length == 2)
 			{
-				var evaluatedValue;
-
+				// set the parameter alias. 
+				var alias = currentParamSections[0];
+				
+				var paramvalue = currentParamSections[1];
+				
 				try 
 				{
 					// TODO Eventually we will have to take security into account. Look into creating a 
 					// a wrapper for eval with its own scope for variables. (Look into a javascript 
 					// expression parser to append all object identifiers to a safe namespace 'toffle.$')
-					evaluatedValue = eval(param[key]);
+					evaluatedValue = eval(paramvalue);
 				}
 				catch(err) 
 				{
 					// This is not an object reference, leave it be.
-					evaluatedValue = param[key];
+					evaluatedValue = paramvalue;
 				}
 				
 				// Set the evaluated value
-				param[key] = evaluatedValue;
+				outputParams[alias] = evaluatedValue;
+			}
+			else
+			{
+				throw "toffle: Error evaluating parameter alias: " + currentParam;
 			}
 		}
 		
 		// Return our evaluated literal input.
-		return param;
+		return outputParams;
 	}
 	else
 	{
-		try
-		{
-			// TODO Eventually we will have to take security into account. Look into creating a 
-			// a wrapper for eval with its own scope for variables. (Look into a javascript 
-			// expression parser to append all object identifiers to a safe namespace 'toffle.$')
-			var evaluatedValue = eval(param);
-
-			// We didn't blow up evaluating that input. Return our spoils.
-			return { param: evaluatedValue };
-		}
-		catch(err)
-		{
-			throw "toffle: Error evaluating parameter input: " + param;
-		}
+		throw "toffle: Error evaluating parameter input, must be wrappend in parenthesis: " + param;
 	} 
 };
 
