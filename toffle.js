@@ -28,8 +28,8 @@ toffle.tokenType = {
 		this.params = "";
 		this.wrapsTokens = false;
 	},
-	FOR: function(){
-		this.type = "for";
+	EACH: function(){
+		this.type = "each";
 		this.pointer = "";
 		this.reference =  "";
 		this.tokens = [];
@@ -38,6 +38,11 @@ toffle.tokenType = {
 	CONTENT: function(){
 		this.type = "content";
 		this.value = "";
+		this.wrapsTokens = false;
+	},
+	HELPER: function(){
+		this.type = "helper";
+		this.func = null;
 		this.wrapsTokens = false;
 	},
 	CLS: function(){
@@ -50,11 +55,48 @@ toffle.template = function(template){
 	// Reference for available JSON parameters.
 	toffle.$ = {};
 	
+	// Reference for custom user helper functions.
+	helperFunctions = {};
+	
 	// Compiled Templates
 	templates = [];
 
 	// Identifiers of templates that are currently being processed
 	pendingTemplates = [];
+	
+	// Check to see if we were passed a DOM element(our template) or an object(defines template object, helpers, etc...)
+	if(template)
+	{
+		// check to see whether this is a DOM node (our template)
+		if (template.nodeType && template.nodeType === 1) 
+		{
+			// if our element is not a toffle-template type then were are not good to go
+			if(!(template.type == "text/toffle-template"))
+			{
+				throw "toffle: template DOM element must be defined as type 'text/toffle-template'";
+			}
+		}
+		else
+		{
+			// ensure that the user has defined an intiial template
+			if(!('template' in template))
+			{
+				throw "toffle: error! you must provide an initial template";
+			}
+			
+			// has the user defined any helper function, if so then grab them
+			if('helpers' in template)
+			{
+				// set each function on our 'helperFunctions' object for later use when were parsing our template body
+				for (var helper in template.helpers) {
+					helperFunctions[helper] = template.helpers[helper];
+				}
+			}
+			
+			// set our actual template to be the one defined in the input object
+			template = template.template;
+		}
+	}
 
 	// Compile the template, and any subsequent referenced templates
 	toffle.compileTemplate(template, true, pendingTemplates, templates);
@@ -95,7 +137,7 @@ toffle.template = function(template){
 					
 					// TODO Add context params.
 					context.params = inputParams;
-					
+				
 					// Set the params globally.
 					toffle.raiseParams(context.params);
 					
@@ -243,7 +285,7 @@ toffle.template = function(template){
 						break;
 						
 					// If the token is 'for' then raise context and set pointer
-					case 'for' :
+					case 'each' :
 						// Evaluate the reference and get it's length.
 						var ref = {};
 						var refLength = 0;
@@ -469,7 +511,7 @@ toffle.template = function(template){
 		},
 		
 		// A convenience method. Assumes that the input params is , at the top level, an array. Iterates over this array 
-		// rather than the user having to add a 'for' statement to the initial template.
+		// rather than the user having to add an 'each' statement to the initial template.
 		goOver: function(inputParams){
 		
 		},
@@ -660,11 +702,11 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates) {
 			}
 			break;
 
-		// FOR STATEMENT
-		case "for":
-			tokenObj = new toffle.tokenType.FOR();
+		// EACH STATEMENT
+		case "each":
+			tokenObj = new toffle.tokenType.EACH();
 			
-			// Check we have enough sub tokens to form a valid 'for' statement.
+			// Check we have enough sub tokens to form a valid 'each' statement.
 			if(subTokens.length > 3)
 			{
 				// Ensure that we have our 'in' in the correct place.
@@ -681,13 +723,13 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates) {
 				else
 				{	
 					// No 'in' keyword, Error.
-					throw "toffle: Compilation failed! Incorrect 'for' declaration, missing 'in'.";
+					throw "toffle: Compilation failed! Incorrect 'each' declaration, missing 'in'.";
 				}
 			}
 			else
 			{
-				// Not enough sub tokens to form a valid 'for' statement, Error.
-				throw "toffle: Compilation failed! Incorrect 'for' declaration.";
+				// Not enough sub tokens to form a valid 'each' statement, Error.
+				throw "toffle: Compilation failed! Incorrect 'each' declaration.";
 			}
 			break;
 

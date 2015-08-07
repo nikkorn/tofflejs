@@ -29,7 +29,7 @@
 		<p><^ input.sName ^></p><br>
 		
 		<h4>Pets:</h4>
-		<^ for pet in input.pets ^> 
+		<^ each pet in input.pets ^> 
 			<^ plug pettemplate (petInfo:pet) ^>
 		<^/^>
 		
