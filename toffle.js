@@ -516,6 +516,150 @@ toffle.template = function(template){
 		
 		},
 		
+		// Takes a parsed user defined JSON reference and an object containing our accessible data objects and 
+		// carries out an eval-less get for the value.
+		grabValue: function(params, ref){
+			// get data object from params
+			var currentIdent = params[ref[0].name];
+	
+			// if we hit an undefined value, return it
+			if(currentIdent == undefined)
+			{
+				return undefined;
+			}
+
+			for(var i = 1; i < ref.length; i++)
+			{
+				var indexIdents = ref[i].sub;
+
+				if(indexIdents.length > 0)
+				{
+					// check that our index isnt just a single number index
+					if(indexIdents.length == 1)
+					{
+						// get our potential index
+						var index = indexIdents[0].name;
+						
+						// check to see if this is an integer (valid index)
+						if(!isNaN(index) && parseInt(Number(index)) == index && !isNaN(parseInt(index, 10)))
+						{
+							currentIdent = currentIdent[ref[i].name][index];
+						}
+					}
+					else
+					{
+						// recursively call grabValue to determine our index value
+						currentIdent = currentIdent[ref[i].name][grabValue(params,ref[i].sub)];
+					}
+				}
+				else
+				{
+					// set the current value
+					currentIdent = currentIdent[ref[i].name];
+				}
+				
+				// if we hit an undefined value, return it
+				if(currentIdent == undefined)
+				{
+					return undefined;
+				}
+			}
+
+			// return the target value
+			return currentIdent;
+		},
+		
+		// parses a user defined JSON reference
+		parseReference: function(input){
+			// a count of the characters iterated over in 'input'
+			var charCount = 0;
+			
+			// our array of identifiers
+			var idents = [];
+			
+			// current identifier
+			var currentIdent = '';
+			
+			// iterate over all the characters in our input and process the accordingly
+			for(var i = 0; i < input.length; i++)
+			{
+				// geth the character the the current position
+				var ch = input.charAt(i);
+				
+				if(ch == '.')
+				{
+					// the '.' defines the seperation of scope, record 'currentIdent' as an identifier
+					if(currentIdent.length > 0)
+					{
+						idents.push({
+							name: currentIdent.trim(),
+							sub: []
+						});
+					}
+					
+					// reset the identifier
+					currentIdent = '';
+				}
+				else if(ch == '[')
+				{
+					// the '[' defines that we are dealing with the identifier for an array and we have hit the squre brackets wrapping its index 
+					// first of all, we have a vaild identifier, add it
+					idents.push({
+						name: currentIdent.trim(),
+						sub: []
+					});
+					
+					// reset the identifier
+					currentIdent = '';
+					
+					// recursively call this function to parse the reference in the square brackets
+					var subIdents = parseReference(input.substring(i+1));
+					
+					// set the index reference identifiers on the current identifier
+					idents[idents.length - 1].sub = subIdents.idents;
+					
+					// we have to increment our count by the amount of characters processed in our 'parseReference()' call
+					charCount += subIdents.count;
+					i += subIdents.count;
+				}
+				else if(ch == ']')
+				{
+					// the ']' defines that we are dealing with the identifier for an array and we have hit the closing square brackets wrapping its index 
+					// first of all, if we have a 'currentIdent' then add it before we pass our gathered identifiers back to the caller.
+					if(currentIdent.length > 0)
+					{
+						idents.push({
+							name: currentIdent.trim(),
+							sub: []
+						});
+					}
+					
+					return { idents:idents, count: charCount + 1 };
+				}
+				else 
+				{
+					// add the current character to our current identifier
+					currentIdent = currentIdent + ch;
+				}
+				
+				charCount++;
+			}
+			
+			// if we have a value for 'currentIdent' then add it as the last identifier will not be followed by a '.'
+			if(currentIdent.length > 0)
+			{
+				idents.push({
+					name: currentIdent.trim(),
+					sub: []
+				});
+			}
+			
+			// add the length of our trailing identifer to the number of characters processed
+			charCount += currentIdent.length;
+			
+			return { idents:idents, count: charCount };
+		},
+		
 		handleAjaxError: function(details, error, message){
 			// something went wrong, call the user specified 'failed' function, if there is one.
 			if('failed' in details)
