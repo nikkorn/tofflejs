@@ -53,16 +53,19 @@ toffle.tokenType = {
 
 toffle.template = function(template){
 	// Reference for available JSON parameters.
-	toffle.$ = {};
+	var p$ = {};
 	
 	// Reference for custom user helper functions.
-	helperFunctions = {};
+	var helperFunctions = {};
+	
+	// Defines whether expressions will be processed by toffle or by the javascript interpreter.
+	var sandboxMode = true;
 	
 	// Compiled Templates
-	templates = [];
+	var templates = [];
 
 	// Identifiers of templates that are currently being processed
-	pendingTemplates = [];
+	var pendingTemplates = [];
 	
 	// Check to see if we were passed a DOM element(our template) or an object(defines template object, helpers, etc...)
 	if(template)
@@ -93,6 +96,12 @@ toffle.template = function(template){
 				}
 			}
 			
+			// check whether the user has explicitly defined whether they want to process templates in the sandboxed mode
+			if('sandboxed' in template)
+			{
+				sandboxMode = template.sandboxed;
+			}
+			
 			// set our actual template to be the one defined in the input object
 			template = template.template;
 		}
@@ -102,6 +111,7 @@ toffle.template = function(template){
 	toffle.compileTemplate(template, true, pendingTemplates, templates);
 	
 	var returnObject = {
+		sandboxed: sandboxMode,
 		templates: {},
 		go: function(inputParams){
 			// Our output.
@@ -738,7 +748,7 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
 			var newToken = currentTemplate.templateString.slice(openingTokenIndex, i);
 
 			// Parse the plain text token into an uppidt token.
-			newToken = toffle.tokenify(newToken, template.id, pendingTemplates);	
+			newToken = toffle.tokenify(newToken, template.id, pendingTemplates, templates);	
 
 			newToken.tokenIndex = i - openingTokenIndex;		
 
@@ -781,7 +791,7 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
 		});
 };
 
-toffle.tokenify = function(token, currentTemplate, pendingTemplates) {
+toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) {
 	var tokenObj;
 
 	// First step is to determine if this token is a content closer.
