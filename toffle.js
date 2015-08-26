@@ -530,36 +530,35 @@ toffle.template = function(template){
 		// carries out an eval-less get for the value.
 		grabValue: function(params, ref){
 			// get data object from params
-			var currentIdent = params[ref[0].name];
-	
+			var currentIdent = params;
+
 			// if we hit an undefined value, return it
 			if(currentIdent == undefined)
 			{
 				return undefined;
 			}
 
-			for(var i = 1; i < ref.length; i++)
+			for(var i = 0; i < ref.length; i++)
 			{
 				var indexIdents = ref[i].sub;
 
 				if(indexIdents.length > 0)
 				{
-					// check that our index isnt just a single number index
-					if(indexIdents.length == 1)
+					// recursively call grabValue to determine our index value
+					currentIdent = currentIdent[ref[i].name][grabValue(params,ref[i].sub)]; 
+					
+					// check if we have trailing square bracket property accessors. 
+					if(ref[i].subTrail)
 					{
-						// get our potential index
-						var index = indexIdents[0].name;
-						
-						// check to see if this is an integer (valid index)
-						if(!isNaN(index) && parseInt(Number(index)) == index && !isNaN(parseInt(index, 10)))
+						// if we do, recursively call grabValue() to reach our value
+						for(var s = 0; s < ref[i].subTrail.length; s++)
 						{
-							currentIdent = currentIdent[ref[i].name][index];
+							// get sub
+							var sub = ref[i].subTrail[s];
+							
+							// get next value
+							currentIdent = currentIdent[grabValue(params, sub)];
 						}
-					}
-					else
-					{
-						// recursively call grabValue to determine our index value
-						currentIdent = currentIdent[ref[i].name][grabValue(params,ref[i].sub)];
 					}
 				}
 				else
@@ -573,6 +572,7 @@ toffle.template = function(template){
 				{
 					return undefined;
 				}
+				
 			}
 
 			// return the target value
@@ -613,24 +613,76 @@ toffle.template = function(template){
 				else if(ch == '[')
 				{
 					// the '[' defines that we are dealing with the identifier for an array and we have hit the squre brackets wrapping its index 
-					// first of all, we have a vaild identifier, add it
-					idents.push({
-						name: currentIdent.trim(),
-						sub: []
-					});
+					// first of all, we have a vaild identifier, ONLY if it is not empty, if it is then this index is directly following another e.g. 'me[details][age]' 
+					if(currentIdent.length > 0)
+					{
+						idents.push({
+							name: currentIdent.trim(),
+							sub: []
+						});
+					}
 					
 					// reset the identifier
 					currentIdent = '';
-					
-					// recursively call this function to parse the reference in the square brackets
-					var subIdents = parseReference(input.substring(i+1));
-					
-					// set the index reference identifiers on the current identifier
-					idents[idents.length - 1].sub = subIdents.idents;
-					
-					// we have to increment our count by the amount of characters processed in our 'parseReference()' call
-					charCount += subIdents.count;
-					i += subIdents.count;
+						
+					// check to see if the user wants to use a literal string identifier '[[some.pants#but/valid.json@identifier]]'
+					if(input.charAt(i + 1) == '[')
+					{
+						var literalClosed = false;
+						
+						// loop through the input to find the closing ']]'
+						for(var x = (i + 2); x < (input.length - 1); x++){
+						
+							// we have found the closing ']]'
+							if(input.substring(x, x + 2) == ']]')
+							{
+								literalClosed = true;
+								
+								idents.push({
+									name: input.substring(i + 2, x),
+									sub: [],
+									literal: true
+								});
+								
+								break;
+							}
+						}
+						
+						if(!literalClosed)
+						{
+							throw "toffle: No closing ']]' for literal identifier";
+						}
+						
+						charCount += (x - i) + 1;
+						i += (x - i) + 1;
+					}
+					else
+					{
+						// recursively call this function to parse the reference in the square brackets
+						var subIdents = parseReference(input.substring(i+1));
+						
+						if(idents[idents.length - 1].sub.length == 0)
+						{
+							// set the index reference identifiers on the current identifier
+							idents[idents.length - 1].sub = subIdents.idents;
+						}
+						else
+						{
+							if(!idents[idents.length - 1].subTrail)
+							{
+								idents[idents.length - 1].subTrail = [];
+								idents[idents.length - 1].subTrail.push(subIdents.idents);
+							}
+							else
+							{
+								idents[idents.length - 1].subTrail.push(subIdents.idents);
+							}
+						}
+						
+						// we have to increment our count by the amount of characters processed in our 'parseReference()' call
+						charCount += subIdents.count;
+						i += subIdents.count;
+					}
 				}
 				else if(ch == ']')
 				{
