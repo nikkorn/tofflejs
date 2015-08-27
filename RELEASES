@@ -8,5 +8,8 @@
 	},{
 		"version":"1.02", 
 		"desc":"Changed the parameter syntax for template references."
+	},{
+		"version":"1.03", 
+		"desc":"Removed all use of eval(), toffle now relies on its own secure method of accessing properties and carrying out evaluations. Remove 'Sandboxed' mode as i have decided that I don't want to offer an unsecure option."
 	}
 ]}
