@@ -17,8 +17,11 @@
 </head>
 
 <body>
+	<input type="button" value="Let's Toffle!" onclick="generateMarkup()">
  
 	<div id="container"></div>
+	
+	<br><div id="TimerBox"></div>
 	
 	<script id="myInfoTemplate" type="text/toffle-template">
 	
@@ -69,9 +72,20 @@
 			]
 		};
 
-		var mytemp = toffle.template(document.getElementById('myInfoTemplate'));
-		var output = mytemp.go({ input: json }); 
-		document.getElementById('container').innerHTML = output; 
+		function generateMarkup()
+		{
+			// lets see how long it takes do generate our markup using our templates.
+			var d = new Date();
+			var startTime = d.getTime();
+			
+			var mytemp = toffle.template(document.getElementById('myInfoTemplate'));
+			var output = mytemp.go({ input: json }); 
+			document.getElementById('container').innerHTML = output; 
+			
+			// display the elapsed time
+			document.getElementById("TimerBox").innerHTML = "Time Taken: " + ((new Date().getTime() - startTime) / 1000) + "ms" ;
+		}
+		
 	</script>
 	
 </body>

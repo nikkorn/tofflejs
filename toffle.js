@@ -352,7 +352,7 @@ toffle.template = function(template){
 						}
 						
 						// Parse the template params and set them in the context.
-						templateContext.params = toffle.parseParam(token.params, this.getParamPool(workStack));
+						templateContext.params = this.parseParam(token.params, this.getParamPool(workStack));
 					
 						// Push the template context onto the stack.
 						workStack.push(templateContext);
@@ -370,31 +370,6 @@ toffle.template = function(template){
 			}
 			
 			return output;
-		},
-		
-		getParamPool: function(stack){
-			var pool = {};
-			
-			// go up through the contexts, from root (initial template) to the context that has the current scope 
-			for(var contextIndex = 0; contextIndex < stack.length; contextIndex++)
-			{
-				// get the current context
-				var context = stack[contextIndex];
-				
-				// add the parameters to the pool
-				for(var key in context.params) 
-				{
-					pool[key] = context.params[key];
-				}
-				
-				// if we are dealing with an 'each' context we will need to add the pointer reference
-				if(context.pointerIdent) 
-				{
-					pool[context.pointerIdent] = context.pointer;
-				}
-			}
-		
-			return pool;
 		},
 		
 		// Carries out a get/post ajax call to asynchronously remotely fetch JSON from elsewhere, compile it, process the templates
@@ -721,6 +696,31 @@ toffle.template = function(template){
 			return { idents:idents, count: charCount };
 		},
 		
+		getParamPool: function(stack){
+			var pool = {};
+			
+			// go up through the contexts, from root (initial template) to the context that has the current scope 
+			for(var contextIndex = 0; contextIndex < stack.length; contextIndex++)
+			{
+				// get the current context
+				var context = stack[contextIndex];
+				
+				// add the parameters to the pool
+				for(var key in context.params) 
+				{
+					pool[key] = context.params[key];
+				}
+				
+				// if we are dealing with an 'each' context we will need to add the pointer reference
+				if(context.pointerIdent) 
+				{
+					pool[context.pointerIdent] = context.pointer;
+				}
+			}
+		
+			return pool;
+		},
+		
 		handleAjaxError: function(details, error, message){
 			// something went wrong, call the user specified 'failed' function, if there is one.
 			if('failed' in details)
@@ -732,6 +732,65 @@ toffle.template = function(template){
 				// If the user doesnt want to handle this by specifying a 'failed' callback, then just error.
 				throw message;
 			}
+		},
+		
+		parseParam: function(param, paramPool) {
+			// Trim the input
+			param = param.trim();
+
+			// Check for parenthesis
+			if((param.charAt(0) == '(') && (param.charAt(param.length-1) == ')')) 
+			{
+				// our output parameter object
+				var outputParams = {};
+				
+				//strip the parenthesis
+				param = param.substring(1, param.length - 1);
+				
+				// split the parameters on ","
+				var params = param.split(",");
+
+				// Iterate over each value in the parameters and attempt to evaluate each.
+				// set the actual value to be the output of the eval() method. This sounds crazy but if a value
+				// happens to be a string that represents another json object then this will replace the string
+				// with the actual object.
+				for (var i = 0; i < params.length; i++) 
+				{
+					// get current param and neaten it up
+					currentParam = params[i].trim();
+					
+					// try to split the param on the ":" caracter to see if it is aliased
+					currentParamSections = currentParam.split(":");
+					
+					// each param will have an alias, make sure we have one
+					if(currentParamSections.length == 2)
+					{
+						// set the parameter alias. 
+						var alias = currentParamSections[0];
+						
+						var paramvalue = currentParamSections[1];
+						
+						// TODO Determine whet the hell kind of value 'paramValue' is. Could be:
+						//   - String:  		Will be wrapped in " or ', simply do 'outputParams[alias] = paramValue' but strip the quotes off first.
+						//   - Number:  		Check for any valid number, to check see if '!isNaN(paramValue)' is true, if so then do 'outputParams[alias] = paramValue'.
+						//   - Property Accessor:	We will have to call parseReference() and grabValue() to get the property that is being set as a parameter.
+
+						// Set the evaluated value, TODO set it correctly!
+						outputParams[alias] = paramPool[paramvalue];
+					}
+					else
+					{
+						throw "toffle: Error evaluating parameter alias: " + currentParam;
+					}
+				}
+				
+				// Return our evaluated literal input.
+				return outputParams;
+			}
+			else
+			{
+				throw "toffle: Error evaluating parameter input, must be wrappend in parenthesis: " + param;
+			} 
 		}
 	}
 	
@@ -1037,58 +1096,4 @@ toffle.generateTokenAST = function(template){
 
 	// Return our root token.
 	return tree[0];
-};
-
-toffle.parseParam = function(param, paramPool) {
-	// Trim the input
-	param = param.trim();
-
-	// Check for parenthesis
-	if((param.charAt(0) == '(') && (param.charAt(param.length-1) == ')')) 
-	{
-		// our output parameter object
-		var outputParams = {};
-		
-		//strip the parenthesis
-		param = param.substring(1, param.length - 1);
-		
-		// split the parameters on ","
-		var params = param.split(",");
-
-		// Iterate over each value in the parameters and attempt to evaluate each.
-		// set the actual value to be the output of the eval() method. This sounds crazy but if a value
-		// happens to be a string that represents another json object then this will replace the string
-		// with the actual object.
-		for (var i = 0; i < params.length; i++) 
-		{
-			// get current param and neaten it up
-			currentParam = params[i].trim();
-			
-			// try to split the param on the ":" caracter to see if it is aliased
-			currentParamSections = currentParam.split(":");
-			
-			// each param will have an alias, make sure we have one
-			if(currentParamSections.length == 2)
-			{
-				// set the parameter alias. 
-				var alias = currentParamSections[0];
-				
-				var paramvalue = currentParamSections[1];
-				
-				// Set the evaluated value
-				outputParams[alias] = paramPool[paramvalue];
-			}
-			else
-			{
-				throw "toffle: Error evaluating parameter alias: " + currentParam;
-			}
-		}
-		
-		// Return our evaluated literal input.
-		return outputParams;
-	}
-	else
-	{
-		throw "toffle: Error evaluating parameter input, must be wrappend in parenthesis: " + param;
-	} 
 };
