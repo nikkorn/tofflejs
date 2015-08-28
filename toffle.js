@@ -775,8 +775,27 @@ toffle.template = function(template){
 						//   - Number:  		Check for any valid number, to check see if '!isNaN(paramValue)' is true, if so then do 'outputParams[alias] = paramValue'.
 						//   - Property Accessor:	We will have to call parseReference() and grabValue() to get the property that is being set as a parameter.
 
-						// Set the evaluated value, TODO set it correctly!
-						outputParams[alias] = paramPool[paramvalue];
+						// are we dealing with a string
+						if((paramvalue.charAt(0) == "'" && paramvalue.charAt(paramvalue.length - 1) == "'") || 
+							(paramvalue.charAt(0) == '"' && paramvalue.charAt(paramvalue.length - 1) == '"'))
+						{
+							outputParams[alias] = paramvalue.substring(1, paramvalue.length - 1);
+						}
+						else if(!isNaN(paramvalue)) 
+						{
+							// We have a number, set it 
+							outputParams[alias] = Number(paramvalue);
+						}
+						else
+						{
+							// we must have a property accessor. get the value
+							var idents = this.parseReference(paramvalue).idents;
+							
+							var value = this.grabValue(paramPool, idents);
+							
+							// Set the evaluated value
+							outputParams[alias] = value;
+						}
 					}
 					else
 					{
