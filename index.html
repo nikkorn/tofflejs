@@ -41,7 +41,7 @@
 		
 		<^ if input.age ^> There is an age! <^/^>
 		
-		<^ ?isOlderThan input.age 40 ^> Older than 40!!! <^/^>
+		<^ ?isYoungerThan input.age 40 ^> Younger than 40!!! <^/^>
 	</script>
 	
 	<script id="pettemplate" type="text/toffle-template">
@@ -80,7 +80,15 @@
 			var d = new Date();
 			var startTime = d.getTime();
 			
-			var mytemp = toffle.template(document.getElementById('myInfoTemplate'));
+			var mytemp = toffle.template({
+				template: document.getElementById('myInfoTemplate'),
+				helpers: {
+					isYoungerThan: function(age, targetAge){
+						return age < targetAge;
+					}
+				}
+			});
+			
 			var output = mytemp.go({ input: json }); 
 			document.getElementById('container').innerHTML = output; 
 			

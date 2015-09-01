@@ -359,8 +359,65 @@ toffle.template = function(template){
 						break;
 						
 					case 'helper' :
-						// TODO call the helper function (if it exists) passing the evaluated argument values.
+						// Call the helper function (if it exists) passing the evaluated argument values.
 						// Helpers can only return true/false so treat this as a if/not context
+						
+						// Check that there is a matching helper function.
+						if(this.hlprFunctions[token.func])
+						{
+							// Iterate over each helper function argument and replace it with the actual evaluated value.
+							for(var argumentIndex = 0; argumentIndex < token.arguments.length; argumentIndex++)
+							{
+								// Get the current argument
+								var currentArgument = token.arguments[argumentIndex];
+								
+								// set each argument to be its evaluated value
+								if((currentArgument.charAt(0) == "'" && currentArgument.charAt(currentArgument.length - 1) == "'") || 
+									(currentArgument.charAt(0) == '"' && currentArgument.charAt(currentArgument.length - 1) == '"'))
+								{
+									token.arguments[argumentIndex] = currentArgument.substring(1, currentArgument.length - 1);
+								}
+								else if(!isNaN(currentArgument)) 
+								{
+									// We have a number, set it 
+									token.arguments[argumentIndex] = Number(currentArgument);
+								}
+								else
+								{
+									// we must have a property accessor. get the value
+									var paramPool = this.getParamPool(workStack);
+							
+									var idents = this.parseReference(currentArgument).idents;
+									
+									var value = this.grabValue(paramPool, idents);
+									
+									// Set the evaluated value
+									token.arguments[argumentIndex] = value;
+								}
+							}
+							
+							// Call the helper function, passing the evaluated arguments, and get the boolean result.
+							var condition = this.hlprFunctions[token.func].apply(this, token.arguments);
+							
+							// If condition is true then push a new context onto the stack.
+							if(condition)
+							{
+								workStack.push({
+									pos: 0,
+									tokens: token.tokens,
+									params: {}, 
+									preParams: {},
+									pointer: null,	
+									iterative: null,	
+									counter: 1, 	
+									iterations: 1	   
+								});
+							}
+						}
+						else
+						{
+							throw "toffle: error! Helper function not specified: " + token.func;
+						}
 						break;
 						
 					// Token type is not recognised. Throw error.
