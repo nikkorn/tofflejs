@@ -42,8 +42,10 @@ toffle.tokenType = {
 	},
 	HELPER: function(){
 		this.type = "helper";
-		this.func = null;
-		this.wrapsTokens = false;
+		this.arguments = [];
+		this.func = "";
+		this.tokens = []; 
+		this.wrapsTokens = true;
 	},
 	CLS: function(){
 		this.type = "cls";
@@ -52,9 +54,6 @@ toffle.tokenType = {
 };
 
 toffle.template = function(template){
-	// Reference for available JSON parameters.
-	var p$ = {};
-	
 	// Reference for custom user helper functions.
 	var helperFunctions = {};
 	
@@ -103,6 +102,7 @@ toffle.template = function(template){
 	
 	var returnObject = {
 		templates: {},
+		hlprFunctions: helperFunctions,
 		go: function(inputParams){
 			// Our output.
 			var output = '';
@@ -357,7 +357,11 @@ toffle.template = function(template){
 						// Push the template context onto the stack.
 						workStack.push(templateContext);
 						break;
-					
+						
+					case 'helper' :
+						// TODO call the helper function (if it exists) passing the evaluated argument values.
+						// Helpers can only return true/false so treat this as a if/not context
+						break;
 						
 					// Token type is not recognised. Throw error.
 					default:
@@ -1078,11 +1082,29 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 		
 		// SIMPLE REFERENCES
 		default:
-			// Set our token type.
-			tokenObj = new toffle.tokenType.REF();
+			// check for helpers (start with '?')
+			if(subTokens[0].length > 1 && (subTokens[0].charAt(0) == '?'))
+			{
+				// Set our token type.
+				tokenObj = new toffle.tokenType.HELPER();
+				
+				// set the function name
+				tokenObj.func = subTokens[0].substring(1);
 			
-			// Set the token value.
-			tokenObj.value = token;
+				// Cut out our function identifier.
+				subTokens.splice(0,1);
+				
+				// the following subtokens should be method arguments
+				tokenObj.arguments = subTokens;	
+			}
+			else
+			{
+				// Set our token type.
+				tokenObj = new toffle.tokenType.REF();
+				
+				// Set the token value.
+				tokenObj.value = token;
+			}
 	}
 	
 	// Return the token.
