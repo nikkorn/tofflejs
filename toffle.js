@@ -432,9 +432,27 @@ toffle.template = function(template){
 							return;
 						}
 						
-						// TODO check the details for a 'parse' function, if one is there then pass it the raw json.
-						// if the user has been good then they will have done their own manipulation on the json and returned the 
-						// json that we should actually use to generate our output.
+						// check the details for a 'parse' function, if one is there then pass it the raw json.
+						if('parse' in details)
+						{
+							// wrap this in a try, in case the user was naughty and didn't pass us a valid function
+							try
+							{
+								// parse the JSON, the user will have to return either true or false. true to continue, false to abort.
+								var continueProcessing = details.parse(responseJSON);
+								
+								// has the user requested that the operation be aborted.
+								if(!continueProcessing)
+								{
+									return;
+								}
+							}
+							catch(err)
+							{
+								returnObj.handleAjaxError(details, err, "toffle: Error parsing JSON.");
+								return;
+							}
+						}
 						
 						// our template output
 						var templateOutput;
