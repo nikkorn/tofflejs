@@ -1140,13 +1140,13 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 		// SIMPLE REFERENCES
 		default:
 			// check for helpers (start with '?')
-			if(subTokens[0].length > 1 && (subTokens[0].charAt(0) == '?'))
+			if(subTokens[0].length > 1 && (subTokens[0].substring(0,2) == '??'))
 			{
 				// Set our token type.
 				tokenObj = new toffle.tokenType.HELPER();
 				
 				// set the function name
-				tokenObj.func = subTokens[0].substring(1);
+				tokenObj.func = subTokens[0].substring(2);
 			
 				// Cut out our function identifier.
 				subTokens.splice(0,1);
