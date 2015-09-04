@@ -36,6 +36,11 @@
 			<^ plug pettemplate (petInfo:pet) ^>
 		<^/^>
 		
+		<h4>Pets supercute:</h4>
+		<^ match pet in ??catIsSuperCute input.pets ^> 
+			<^ plug pettemplate (petInfo:pet) ^>
+		<^/^>
+		
 		<h3>Age</h3>
 		<p><^ input.age ^></p><br>
 		
@@ -70,6 +75,14 @@
 				{
 					name:"Neighbour Cat",
 					cutenessLevel: 2
+				},
+				{
+					name:"Kiddles",
+					cutenessLevel: 10
+				},
+				{
+					name:"Fluffums",
+					cutenessLevel: 11
 				}
 			]
 		};
@@ -85,6 +98,9 @@
 				helpers: {
 					isYoungerThan: function(age, targetAge){
 						return age < targetAge;
+					},
+					catIsSuperCute: function(cat){
+						return cat.cutenessLevel > 4;
 					}
 				}
 			});

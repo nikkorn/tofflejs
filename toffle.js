@@ -35,6 +35,14 @@ toffle.tokenType = {
 		this.tokens = [];
 		this.wrapsTokens = true;
 	},
+	MATCH: function(){
+		this.type = "match";
+		this.pointer = "";
+		this.reference =  "";
+		this.func = "";
+		this.tokens = [];
+		this.wrapsTokens = true;
+	},
 	CONTENT: function(){
 		this.type = "content";
 		this.value = "";
@@ -174,8 +182,17 @@ toffle.template = function(template){
 						// Increment the counter.
 						context.counter = context.counter + 1;
 						
-						// Set the context pointer to be the object at position 'context.counter - 1' of context.iterative
-						context.pointer = context.iterative[context.counter - 1];
+						// Are we dealing with a match or else statement?
+						if(context.matchIndexes)
+						{
+							// Set the context pointer to be the next object that matches
+							context.pointer = context.iterative[context.matchIndexes[context.counter - 1]];
+						}
+						else
+						{
+							// Set the context pointer to be the object at position 'context.counter - 1' of context.iterative
+							context.pointer = context.iterative[context.counter - 1];
+						}
 						
 						// Reset the position.
 						context.pos = 0;
@@ -290,11 +307,12 @@ toffle.template = function(template){
 						}
 						break;
 						
-					// If the token is 'for' then raise context and set pointer
+					// If the token is 'each' then raise context and set pointer
 					case 'each' :
 						// Evaluate the reference and get it's length.
 						var ref = {};
 						var refLength = 0;
+						
 						try
 						{
 							var paramPool = this.getParamPool(workStack);
@@ -312,18 +330,97 @@ toffle.template = function(template){
 							throw "toffle: error evaluating reference '" + token.reference + "'";
 						}
 						
-						// Push new context onto the stack.
-						workStack.push({
-							pos: 0,
-							tokens: token.tokens,
-							params: {}, 
-							preParams: {},
-							pointer: ref[0],	
-							pointerIdent: token.pointer,
-							iterative: ref,	
-							counter: 1, 	
-							iterations: refLength	   
-						});
+						// Don't bother adding a context if we have no values
+						if(refLength > 0)
+						{
+							// Push new context onto the stack.
+							workStack.push({
+								pos: 0,
+								tokens: token.tokens,
+								params: {}, 
+								preParams: {},
+								pointer: ref[0],	// TODO check we have ANY values in ref
+								pointerIdent: token.pointer,
+								iterative: ref,	
+								counter: 1, 	
+								iterations: refLength	   
+							});
+						}
+						break;
+						
+						// If the token is 'each' then raise context and set pointer
+					case 'match' :
+						// Evaluate the reference and get it's length.
+						var ref = {};
+						var refLength = 0;
+						var matches = [];
+						
+						try
+						{
+							var paramPool = this.getParamPool(workStack);
+							
+							var idents = this.parseReference(token.reference).idents;
+							
+							var value = this.grabValue(paramPool, idents);
+							
+							var ref = value;
+						}
+						catch(err)
+						{
+							throw "toffle: error evaluating reference '" + token.reference + "'";
+						}
+						
+						for(var itemIndex = 0; itemIndex < ref.length; itemIndex++)
+						{
+							// get the item
+							var item = ref[itemIndex];
+							
+							// create argument array for our helper function
+							var args = [];
+							
+							// helper functions used in match statements should always have their first argument being the current item to evaluate
+							args.push(item);
+							
+							// TODO add support for match helper arguments
+							
+							if(this.hlprFunctions[token.func])
+							{
+								// Call the helper function, passing the evaluated arguments, and get the boolean result.
+								var condition = this.hlprFunctions[token.func].apply(this, args);
+								
+								// If condition is true then we have a match.
+								if(condition)
+								{
+									// Increment the references length.
+									refLength++;
+									
+									// Add this item index to array of idexes representing items that match.
+									matches.push(itemIndex);
+								}
+							}
+							else
+							{
+								throw "toffle: error! Helper function not specified for match: " + token.func;
+							}
+						}
+						
+						// Don't bother adding a context if we have no values
+						if(refLength > 0)
+						{
+							// Push new context onto the stack.
+							workStack.push({
+								pos: 0,
+								tokens: token.tokens,
+								params: {}, 
+								preParams: {},
+								pointer: ref[matches[0]], // our first pointer should point to first MATCHING item  
+								pointerIdent: token.pointer,
+								iterative: ref,	
+								counter: 1, 	
+								matchIndexes: matches,
+								iterations: refLength	   
+							});
+						}
 						
 						break;
 						
@@ -1094,6 +1191,48 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 				throw "toffle: Compilation failed! Incorrect 'each' declaration.";
 			}
 			break;
+			
+		// MATCH STATEMENT  <^ match cat in ??catIsYoung cats ^>
+		case "match":
+			tokenObj = new toffle.tokenType.MATCH();
+		
+			// Check we have enough sub tokens to form a valid 'each' statement.
+			if(subTokens.length > 4)
+			{
+				// Ensure that we have our 'in' in the correct place.
+				if(subTokens[2] == 'in')
+				{
+					// Set the pointer
+					tokenObj.pointer = subTokens[1];
+					
+					if(subTokens[3].length > 2 && (subTokens[3].substring(0,2) == '??'))
+					{
+						// set the helper function name
+						tokenObj.func = subTokens[3].substring(2);
+					
+						// Collect the rest of the subTokens to for the target object literal/identifier.
+						subTokens.splice(0,4);
+						
+						tokenObj.reference = subTokens.join(' ');
+					}
+					else 
+					{
+						// This is not the correct syntax for a helper function, Error.
+						throw "toffle: Compilation failed! Incorrect 'match' declaration, not a valid Helper identifier: " + subTokens[3];
+					}
+				}
+				else
+				{	
+					// No 'in' keyword, Error.
+					throw "toffle: Compilation failed! Incorrect 'each' declaration, missing 'in'.";
+				}
+			}
+			else
+			{
+				// Not enough sub tokens to form a valid 'each' statement, Error.
+				throw "toffle: Compilation failed! Incorrect 'each' declaration.";
+			}
+			break;
 
 		// IF STATEMENT
 		case "if":
@@ -1152,6 +1291,7 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 				subTokens.splice(0,1);
 				
 				// the following subtokens should be method arguments
+				// TODO don't split on whitespace in strings!
 				tokenObj.arguments = subTokens;	
 			}
 			else
