@@ -1142,17 +1142,12 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 			// Gather up all other subtokens as these make up the user defined parameters.
 			// This template may not require parameters.
 			if(subTokens.length > 2)
-			{
-				var params = "";
-				
-				// Gather subTokens. 
-				for(var b = 2; b < subTokens.length; b++)
-				{
-					params = params + subTokens[b];
-				}
+			{	
+				// cut off 'plug' and template name tokens.
+				subTokens.splice(0,2);
 				
 				// Set the parameters on the token. 
-				tokenObj.params = params;
+				tokenObj.params = subTokens.join(' ');
 			}
 			else
 			{
