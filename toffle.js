@@ -1296,6 +1296,99 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 	return tokenObj;
 };
 
+/**
+* Takes a whitespace-seperated list of arguments, parses it, and returns an array of items.
+*/
+toffle.parseRawArgumentList = function(string)
+{
+    var args = [];
+    var inString = false;
+    var openQuote = "";
+    var argBuff = "";
+    
+    for(var i = 0; i < string.length; i++)
+    {
+        var ch = string.charAt(i);
+            
+        if(ch == '"' || ch == "'")
+        {
+            if(inString)
+            {
+                if((ch == openQuote) && !isQuoteEscaped(i,string))
+                {
+                    inString = false;
+                }
+            }
+            else
+            {
+                inString = true;
+                openQuote = ch;
+            }
+             argBuff = argBuff + ch;
+        }
+        else if(ch == ' ' && !inString)
+        {
+            if(argBuff.length > 0)
+            {
+                args.push(argBuff);
+                argBuff = "";
+            }
+        }
+        else
+        {
+            argBuff = argBuff + ch;
+        }
+    }
+    
+    if(argBuff.length > 0)
+    {
+        args.push(argBuff);
+        argBuff = "";
+    }
+    
+    // return the array of parsed arguments.
+ 	return args;   
+};
+
+/**
+* Takes a string and determines whether the quote at position index is escaped.
+*/
+toffle.isQuoteEscaped = function(index, string)
+{
+    if(index == 0)
+    {
+     	return false;    
+    }
+    else
+    {
+     	if(string.charAt(index - 1) == "\\")
+        {
+            if((index - 1) == 0)
+            {
+                return true;
+            }
+            else
+            {
+                if(string.charAt(index-2) == "\\")
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+}; 
+
+/**
+*	Takes a compiled template and genertes an AST of tokens from our one-dimensional list.
+*/
 toffle.generateTokenAST = function(template){
 	// Create the tree.
 	var tree = [];
