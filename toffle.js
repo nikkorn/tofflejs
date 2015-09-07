@@ -123,7 +123,6 @@ toffle.template = function(template){
 				pos: 0,
 				tokens: [],
 				params: {}, 	// Contains template context params and variables that are set in the scope of this context.
-				preParams: {},  // Reference of all params that will be overwritten by the params introduced in this context.
 				pointer: null,	// Only used in looping (The current item in iterative).
 				iterative: null,	// Only used in looping (The object we are looping through).
 				counter: 1, 	// Only really for looping, 1 otherwise.
@@ -264,7 +263,6 @@ toffle.template = function(template){
 								pos: 0,
 								tokens: token.tokens,
 								params: {}, 
-								preParams: {},
 								pointer: null,	
 								iterative: null,	
 								counter: 1, 	
@@ -298,7 +296,6 @@ toffle.template = function(template){
 								pos: 0,
 								tokens: token.tokens,
 								params: {}, 
-								preParams: {},
 								pointer: null,	
 								iterative: null,	
 								counter: 1, 	
@@ -338,7 +335,6 @@ toffle.template = function(template){
 								pos: 0,
 								tokens: token.tokens,
 								params: {}, 
-								preParams: {},
 								pointer: ref[0],	// TODO check we have ANY values in ref
 								pointerIdent: token.pointer,
 								iterative: ref,	
@@ -412,7 +408,6 @@ toffle.template = function(template){
 								pos: 0,
 								tokens: token.tokens,
 								params: {}, 
-								preParams: {},
 								pointer: ref[matches[0]], // our first pointer should point to first MATCHING item  
 								pointerIdent: token.pointer,
 								iterative: ref,	
@@ -434,7 +429,6 @@ toffle.template = function(template){
 							pos: 0,
 							tokens: [],
 							params: {}, 
-							preParams: {},
 							pointer: {},	
 							iterative: {},	
 							counter: 1, 	
@@ -503,7 +497,6 @@ toffle.template = function(template){
 									pos: 0,
 									tokens: token.tokens,
 									params: {}, 
-									preParams: {},
 									pointer: null,	
 									iterative: null,	
 									counter: 1, 	
