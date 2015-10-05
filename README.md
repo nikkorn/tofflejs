@@ -40,7 +40,7 @@ We also need to create a toffle template in our markup, this template defines bo
 	<br>
 	
 	<h3>Pets:</h3>
-	<^ for pet in input.pets ^> 
+	<^ each pet in input.pets ^> 
 		<^ plug petTemplate pet input.fName ^>
 	<^/^>
 	
