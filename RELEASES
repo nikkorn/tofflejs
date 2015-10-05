@@ -11,5 +11,8 @@
 	},{
 		"version":"1.03", 
 		"desc":"Removed all use of eval(), toffle now relies on its own secure method of accessing properties and carrying out evaluations. Remove 'Sandboxed' mode as i have decided that I don't want to offer an unsecure option."
+	},{
+		"version":"1.10", 
+		"desc":"Added goOver() function as well as vastly improving the way helper/template arguments are parsed and managed. Commented everything and did some major cleaning up. Fixed numerous bugs."
 	}
 ]}

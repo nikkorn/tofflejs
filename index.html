@@ -1,3 +1,5 @@
+
+
 <!doctype html>
 
 <html lang="en">
@@ -17,102 +19,125 @@
 </head>
 
 <body>
-	<input type="button" value="Let's Toffle!" onclick="generateMarkup()">
+    <input type="button" value="Let's Toffle!" onclick="generateMarkup()">
  
-	<div id="container"></div>
+    <div id="container"></div>
 	
-	<br><div id="TimerBox"></div>
+	<div id="cakeContainer"></div>
+    
+    <br><div id="TimerBox"></div>
+    
+    <script id="myInfoTemplate" type="text/toffle-template">
+    
+        <h1>First Name</h1>
+        <p> <^ input.fName ^> is my name </p><br>
+        
+        <h2>Second Name</h2>
+        <p><^ input.sName ^></p><br>
+        
+        <h4>Pets:</h4>
+        <^ each pet in input.pets ^> 
+            <^ plug pettemplate pet "waffles"^>
+        <^/^>
+        
+        <h4>Pets supercute:</h4>
+        <^ match pet in ??catIsSuperCute input.pets ^> 
+            <^ plug pettemplate pet input.pets[[0]].name^>
+        <^/^>
+        
+        <h3>Age</h3>
+        <p><^ input.age ^></p><br>
+        
+        <^ if input.age ^> There is an age! <^/^>
+        
+        <^ ??isBetween input.age 20 40 ^> Between 20 and 40!!! <^/^>
+    </script>
+    
+    <script id="pettemplate" type="text/toffle-template" data-params="petInfo|faveFood">
+        <hr>
+        <p>Name: <^ petInfo.name ^> just loves <^ faveFood ^></p>
+        <p>Cuteness Level: <^ petInfo.cutenessLevel ^></p>
+        <hr>
+    </script>
 	
-	<script id="myInfoTemplate" type="text/toffle-template">
-	
-		<h1>First Name</h1>
-		<p> <^ input.fName ^> is my name </p><br>
-		
-		<h2>Second Name</h2>
-		<p><^ input.sName ^></p><br>
-		
-		<h4>Pets:</h4>
-		<^ each pet in input.pets ^> 
-			<^ plug pettemplate (petInfo:pet) ^>
-		<^/^>
-		
-		<h4>Pets supercute:</h4>
-		<^ match pet in ??catIsSuperCute input.pets ^> 
-			<^ plug pettemplate (petInfo:pet) ^>
-		<^/^>
-		
-		<h3>Age</h3>
-		<p><^ input.age ^></p><br>
-		
-		<^ if input.age ^> There is an age! <^/^>
-		
-		<^ ??isYoungerThan input.age 40 ^> Younger than 40!!! <^/^>
-	</script>
-	
-	<script id="pettemplate" type="text/toffle-template">
-		<hr>
-		<p>Name: <^ petInfo.name ^></p>
-		<p>Cuteness Level: <^ petInfo.cutenessLevel ^></p>
-		<hr>
-	</script>
+	<script id="caketemplate" type="text/toffle-template">
+        <p>Cake is <^ cake.type ^></p>
+    </script>
 
-	<script>
+    <script>
 
-		// Test JSON
-		var json = {
-			fName:"Nikolas",
-			sName:"Howard",
-			age:25,
-			pets:[
-				{
-					name:"Wilfred",
-					cutenessLevel: 6
-				},
-				{
-					name:"Scrabbles",
-					cutenessLevel: 4
-				},
-				{
-					name:"Neighbour Cat",
-					cutenessLevel: 2
-				},
-				{
-					name:"Kiddles",
-					cutenessLevel: 10
-				},
-				{
-					name:"Fluffums",
-					cutenessLevel: 11
-				}
-			]
-		};
-
-		function generateMarkup()
-		{
-			// lets see how long it takes do generate our markup using our templates.
-			var d = new Date();
-			var startTime = d.getTime();
-			
-			var mytemp = toffle.template({
-				template: document.getElementById('myInfoTemplate'),
-				helpers: {
-					isYoungerThan: function(age, targetAge){
-						return age < targetAge;
-					},
-					catIsSuperCute: function(cat){
-						return cat.cutenessLevel > 4;
-					}
-				}
-			});
-			
-			var output = mytemp.go({ input: json }); 
-			document.getElementById('container').innerHTML = output; 
-			
-			// display the elapsed time
-			document.getElementById("TimerBox").innerHTML = "Time Taken: " + ((new Date().getTime() - startTime) / 1000) + "ms" ;
-		}
+        // Test JSON
+        var json = {
+            fName:"Nikolas",
+            sName:"Howard",
+            favouritefood:"Egg Custard Tarts",
+            age:5,
+            pets:[
+                {
+                    name:"Wilfred",
+                    cutenessLevel: 6
+                },
+                {
+                    name:"Scrabbles",
+                    cutenessLevel: 4
+                },
+                {
+                    name:"Neighbour Cat",
+                    cutenessLevel: 2
+                },
+                {
+                    name:"Kiddles",
+                    cutenessLevel: 10
+                },
+                {
+                    name:"Fluffums",
+                    cutenessLevel: 11
+                }
+            ]
+        };
 		
-	</script>
-	
+		var cakes = [
+			{type:"good"},
+			{type:"ok"},
+			{type:"bad"}
+		];
+
+        function generateMarkup()
+        {
+            // lets see how long it takes do generate our markup using our templates.
+            var d = new Date();
+            var startTime = d.getTime();
+            
+            var mytemp = toffle.template({
+                template: document.getElementById('myInfoTemplate'),
+                helpers: {
+                    isYoungerThan: function(age, targetAge){
+                        return age < targetAge;
+                    },
+                    catIsSuperCute: function(cat){
+                        return cat.cutenessLevel > 4;
+                    },
+                    isBetween: function(age, lower, upper){
+                        return (age >= lower) && (age <= upper)
+                    }
+                }
+            });
+            var output = mytemp.go({ input: json }); 
+			
+			var mytempcake = toffle.template({
+                template: document.getElementById('caketemplate'),
+            });
+            var cakeoutput = mytempcake.goOver(cakes, "cake"); 
+			
+            document.getElementById('container').innerHTML = output; 
+			
+			document.getElementById('cakeContainer').innerHTML = cakeoutput;
+            
+            // display the elapsed time
+            document.getElementById("TimerBox").innerHTML = "Time Taken: " + ((new Date().getTime() - startTime) / 1000) + "ms" ;
+        }
+        
+    </script>
+    
 </body>
 </html>

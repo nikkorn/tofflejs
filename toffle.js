@@ -4,6 +4,9 @@ var updOpen = '<^';
 var updClose = '^>';
 var updContentClose = '<^/^>';
 
+/**
+* ToffleJS token types.
+*/
 toffle.tokenType = {
 	IF: function(){
 		this.type = "if";
@@ -50,7 +53,7 @@ toffle.tokenType = {
 	},
 	HELPER: function(){
 		this.type = "helper";
-		this.arguments = [];
+		this.arguments = "";
 		this.func = "";
 		this.tokens = []; 
 		this.wrapsTokens = true;
@@ -61,6 +64,11 @@ toffle.tokenType = {
 	}
 };
 
+/**
+* Tokenifies our ToffleJS templates and returns an object containing our parsed template and any referenced templates, along 
+* with a number of functions that can generate our markup and wrap ajax calls to remotely fetch JSON datasets to use as input
+* when generating output markup.
+*/
 toffle.template = function(template){
 	// Reference for custom user helper functions.
 	var helperFunctions = {};
@@ -310,21 +318,44 @@ toffle.template = function(template){
 						var ref = {};
 						var refLength = 0;
 						
-						try
+						// Was this 'each' token added in 'goOver()'? if so then this token encompasses all others and iterates over the input as a whole
+						if(token.wrapsAllTokens)
 						{
-							var paramPool = this.getParamPool(workStack);
+							// The input MUST be an array
+							if(!(inputParams instanceof Array))
+							{
+								throw "toffle: cannot iterate over input dataset, not an array.";
+							}
 							
-							var idents = this.parseReference(token.reference).idents;
-							
-							var value = this.grabValue(paramPool, idents);
-							
-							var ref = value;
-							
+							// This 'each' token iterates over the input JSON as a whole (must me an array)
+							ref = inputParams;
+								
 							refLength = ref.length;
 						}
-						catch(err)
+						else
 						{
-							throw "toffle: error evaluating reference '" + token.reference + "'";
+							try
+							{
+								var paramPool = this.getParamPool(workStack);
+								
+								var idents = this.parseReference(token.reference).idents;
+								
+								var value = this.grabValue(paramPool, idents);
+								
+								// The value MUST be an array
+								if(!(value instanceof Array))
+								{
+									throw "toffle: cannot iterate over '" + token.reference + "', not an array.";
+								}
+								
+								var ref = value;
+								
+								refLength = ref.length;
+							}
+							catch(err)
+							{
+								throw "toffle: error evaluating reference '" + token.reference + "'";
+							}
 						}
 						
 						// Don't bother adding a context if we have no values
@@ -335,7 +366,7 @@ toffle.template = function(template){
 								pos: 0,
 								tokens: token.tokens,
 								params: {}, 
-								pointer: ref[0],	// TODO check we have ANY values in ref
+								pointer: ref[0],	
 								pointerIdent: token.pointer,
 								iterative: ref,	
 								counter: 1, 	
@@ -443,8 +474,67 @@ toffle.template = function(template){
 						}
 						
 						// Parse the template params and set them in the context.
-						templateContext.params = this.parseParam(token.params, this.getParamPool(workStack));
-					
+						templateContext.params = toffle.parseRawArgumentList(token.params.trim());
+						
+						// need to get the user define identifiers for these paramaters (saved in the template div 'data-params' attribute)
+						var paramIdentifiers = document.getElementById(token.template).getAttribute("data-params");
+						
+						// user defined template parameter identifiers are split using "|"
+						var paramIdentifierArray;
+						
+						// Do we even have an identifiers?
+						if(paramIdentifiers)
+						{
+							paramIdentifierArray = paramIdentifiers.split("|");
+						}
+						else
+						{
+							paramIdentifierArray = [];
+						}
+						
+						// If the number of our arguments and parameter identifiers don't match then error
+						if(paramIdentifierArray.length != templateContext.params.length)
+						{
+							throw "toffle: error! Template reference arguments do not match parameters.";
+						}
+						
+						var paramIdentifierArrayCounter;
+						
+						// Iterate over both the array of arguments and the array of identifers, link them, and set them on the current context.
+						for(paramIdentifierArrayCounter = 0; paramIdentifierArrayCounter < paramIdentifierArray.length; paramIdentifierArrayCounter++)
+						{
+							var paramIdentifier = paramIdentifierArray[paramIdentifierArrayCounter];
+							var argument = templateContext.params[paramIdentifierArrayCounter];
+							
+							// Now get the actual value of our argument
+							if((argument.charAt(0) == "'" && argument.charAt(argument.length - 1) == "'") || 
+								(argument.charAt(0) == '"' && argument.charAt(argument.length - 1) == '"'))
+							{
+								argument = argument.substring(1, argument.length - 1);
+							}
+							else if(!isNaN(argument)) 
+							{
+								// We have a number, set it 
+								argument = Number(argument);
+							}
+							else
+							{
+								// Get the current parameter pool
+								var paramPool = this.getParamPool(workStack);
+								
+								// we must have a property accessor. get the value
+								var idents = this.parseReference(argument).idents;
+								
+								var value = this.grabValue(paramPool, idents);
+								
+								// Set the evaluated value
+								argument = value;
+							}
+							
+							// We now have the evaluated value and the identifier, we can set this in the params object of the current context.
+							templateContext.params[paramIdentifier] = argument
+						}
+						
 						// Push the template context onto the stack.
 						workStack.push(templateContext);
 						break;
@@ -456,6 +546,9 @@ toffle.template = function(template){
 						// Check that there is a matching helper function.
 						if(this.hlprFunctions[token.func])
 						{
+                            // Parse the helper arguments into an array of arguments.
+                            token.arguments = toffle.parseRawArgumentList(token.arguments);
+                            
 							// Iterate over each helper function argument and replace it with the actual evaluated value.
 							for(var argumentIndex = 0; argumentIndex < token.arguments.length; argumentIndex++)
 							{
@@ -523,9 +616,11 @@ toffle.template = function(template){
 			return output;
 		},
 		
-		// Carries out a get/post ajax call to asynchronously remotely fetch JSON from elsewhere, compile it, process the templates
-		// and plug the output to a location (dropoff value in details parameter, if specified) when were done. Users can also add a 'finished'
-		// callback which we will pass the template output and fetched JSON to. 
+        /**
+        * Carries out a get/post ajax call to asynchronously remotely fetch JSON from elsewhere, compile it, process the templates
+        * and plug the output to a location (dropoff value in details parameter, if specified) when done. Users can also add a 'finished'
+        * callback which we will pass the template output and fetched JSON to. 
+        */
 		goAway: function(details){
 			// check that we have been given our details object
 			if(!details)
@@ -662,15 +757,60 @@ toffle.template = function(template){
 				this.handleAjaxError(details, err, "toffle: error carrying out ajax request");
 			}
 		},
-		
-		// A convenience method. Assumes that the input params is , at the top level, an array. Iterates over this array 
-		// rather than the user having to add an 'each' statement to the initial template.
-		goOver: function(inputParams){
-		
+
+        /**
+        * A convenience method. Assumes that the input JSON is , at the top level, an array. Iterates over this array 
+        * rather than the user having to add an 'each' statement to the initial template.
+        */
+		goOver: function(inputJSON, pointerIdentifier){
+			// The initial template
+			var intlTemplate;
+			
+			// Find our initial template as this will be encapsulated in an 'each' token.
+			for(var templateName in this.templates) 
+			{
+			   if(this.templates.hasOwnProperty(templateName)) 
+			   {
+					var temp = this.templates[templateName];
+
+					// Check to see if this is the initial template
+					if(temp.isInitialTemplate)
+					{
+						// We found our initial template
+						intlTemplate = temp;
+						
+						// Done searching
+						break;
+					}	
+				}
+			}
+			
+			// Get a new 'each' token
+			wrappingEachtoken = new toffle.tokenType.EACH();
+			
+			// Set the pointer 
+			wrappingEachtoken.pointer = pointerIdentifier;
+			
+			// Set the reference
+			wrappingEachtoken.reference = "WILLNOTWORK";
+			
+			// Set a flag that will let Toffle know that this token encompasses all other tokens
+			wrappingEachtoken.wrapsAllTokens = true;
+			
+			// Wrap the initial template's root tokens with our 'each' token
+			wrappingEachtoken.tokens = intlTemplate.ast.tokens;
+			
+			// Set the 'each' token as our sole root token in the intial template
+			intlTemplate.ast.tokens = [wrappingEachtoken];
+			
+			// Call go() and return the output
+			return this.go(inputJSON);
 		},
 		
-		// Takes a parsed user defined JSON reference and an object containing our accessible data objects and 
-		// carries out an eval-less get for the value.
+        /**
+        * Takes a parsed user defined JSON reference and an object containing our accessible data objects and
+        * carries out an eval-less get for the value.
+        */
 		grabValue: function(params, ref){
 			// get data object from params
 			var currentIdent = params;
@@ -688,7 +828,7 @@ toffle.template = function(template){
 				if(indexIdents.length > 0)
 				{
 					// recursively call grabValue to determine our index value
-					currentIdent = currentIdent[ref[i].name][grabValue(params,ref[i].sub)]; 
+					currentIdent = currentIdent[ref[i].name][this.grabValue(params,ref[i].sub)]; 
 					
 					// check if we have trailing square bracket property accessors. 
 					if(ref[i].subTrail)
@@ -722,7 +862,9 @@ toffle.template = function(template){
 			return currentIdent;
 		},
 		
-		// parses a user defined JSON reference
+        /**
+        * Parses a user defined JSON reference into a tree structure of identifiers that make up a property accessor.
+        */
 		parseReference: function(input){
 			// a count of the characters iterated over in 'input'
 			var charCount = 0;
@@ -802,7 +944,7 @@ toffle.template = function(template){
 					else
 					{
 						// recursively call this function to parse the reference in the square brackets
-						var subIdents = parseReference(input.substring(i+1));
+						var subIdents = this.parseReference(input.substring(i+1));
 						
 						if(idents[idents.length - 1].sub.length == 0)
 						{
@@ -865,6 +1007,9 @@ toffle.template = function(template){
 			return { idents:idents, count: charCount };
 		},
 		
+        /**
+        * Returns an object containing all data items that are available to the current stack context. 
+        */
 		getParamPool: function(stack){
 			var pool = {};
 			
@@ -890,6 +1035,9 @@ toffle.template = function(template){
 			return pool;
 		},
 		
+        /**
+        * Convenience method for handling Ajax Errors.
+        */
 		handleAjaxError: function(details, error, message){
 			// something went wrong, call the user specified 'failed' function, if there is one.
 			if('failed' in details)
@@ -901,84 +1049,6 @@ toffle.template = function(template){
 				// If the user doesnt want to handle this by specifying a 'failed' callback, then just error.
 				throw message;
 			}
-		},
-		
-		parseParam: function(param, paramPool) {
-			// Trim the input
-			param = param.trim();
-
-			// Check for parenthesis
-			if((param.charAt(0) == '(') && (param.charAt(param.length-1) == ')')) 
-			{
-				// our output parameter object
-				var outputParams = {};
-				
-				//strip the parenthesis
-				param = param.substring(1, param.length - 1);
-				
-				// split the parameters on ","
-				var params = param.split(",");
-
-				// Iterate over each value in the parameters and attempt to evaluate each.
-				// set the actual value to be the output of the eval() method. This sounds crazy but if a value
-				// happens to be a string that represents another json object then this will replace the string
-				// with the actual object.
-				for (var i = 0; i < params.length; i++) 
-				{
-					// get current param and neaten it up
-					currentParam = params[i].trim();
-					
-					// try to split the param on the ":" caracter to see if it is aliased
-					currentParamSections = currentParam.split(":");
-					
-					// each param will have an alias, make sure we have one
-					if(currentParamSections.length == 2)
-					{
-						// set the parameter alias. 
-						var alias = currentParamSections[0];
-						
-						var paramvalue = currentParamSections[1];
-						
-						// TODO Determine whet the hell kind of value 'paramValue' is. Could be:
-						//   - String:  		Will be wrapped in " or ', simply do 'outputParams[alias] = paramValue' but strip the quotes off first.
-						//   - Number:  		Check for any valid number, to check see if '!isNaN(paramValue)' is true, if so then do 'outputParams[alias] = paramValue'.
-						//   - Property Accessor:	We will have to call parseReference() and grabValue() to get the property that is being set as a parameter.
-
-						// are we dealing with a string
-						if((paramvalue.charAt(0) == "'" && paramvalue.charAt(paramvalue.length - 1) == "'") || 
-							(paramvalue.charAt(0) == '"' && paramvalue.charAt(paramvalue.length - 1) == '"'))
-						{
-							outputParams[alias] = paramvalue.substring(1, paramvalue.length - 1);
-						}
-						else if(!isNaN(paramvalue)) 
-						{
-							// We have a number, set it 
-							outputParams[alias] = Number(paramvalue);
-						}
-						else
-						{
-							// we must have a property accessor. get the value
-							var idents = this.parseReference(paramvalue).idents;
-							
-							var value = this.grabValue(paramPool, idents);
-							
-							// Set the evaluated value
-							outputParams[alias] = value;
-						}
-					}
-					else
-					{
-						throw "toffle: Error evaluating parameter alias: " + currentParam;
-					}
-				}
-				
-				// Return our evaluated literal input.
-				return outputParams;
-			}
-			else
-			{
-				throw "toffle: Error evaluating parameter input, must be wrappend in parenthesis: " + param;
-			} 
 		}
 	}
 	
@@ -995,6 +1065,9 @@ toffle.template = function(template){
 	return returnObject;
 };
 
+/**
+* Compiles a single ToffleJS template.
+*/
 toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, templates){
 
 	// Ensure that this template even exists in the document.
@@ -1089,6 +1162,9 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
 		});
 };
 
+/**
+* Parses a ToffleJS code block and returns a Token, it also compiles any referenced ToffleJS templates.
+*/
 toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) {
 	var tokenObj;
 
@@ -1140,7 +1216,7 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 				subTokens.splice(0,2);
 				
 				// Set the parameters on the token. 
-				tokenObj.params = subTokens.join(' ');
+				tokenObj.params = subTokens.join(' ');   // TODO get argument list
 			}
 			else
 			{
@@ -1180,11 +1256,11 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 			}
 			break;
 			
-		// MATCH STATEMENT  <^ match cat in ??catIsYoung cats ^>
+		// MATCH STATEMENT
 		case "match":
 			tokenObj = new toffle.tokenType.MATCH();
 		
-			// Check we have enough sub tokens to form a valid 'each' statement.
+			// Check we have enough sub tokens to form a valid 'match' statement.
 			if(subTokens.length > 4)
 			{
 				// Ensure that we have our 'in' in the correct place.
@@ -1266,7 +1342,7 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 		
 		// SIMPLE REFERENCES
 		default:
-			// check for helpers (start with '?')
+			// check for helpers (start with '??')
 			if(subTokens[0].length > 1 && (subTokens[0].substring(0,2) == '??'))
 			{
 				// Set our token type.
@@ -1278,9 +1354,8 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 				// Cut out our function identifier.
 				subTokens.splice(0,1);
 				
-				// the following subtokens should be method arguments
-				// TODO don't split on whitespace in strings!
-				tokenObj.arguments = subTokens;	
+				// The following subtokens should be method arguments
+				tokenObj.arguments = subTokens.join(" ");
 			}
 			else
 			{
@@ -1314,7 +1389,7 @@ toffle.parseRawArgumentList = function(string)
         {
             if(inString)
             {
-                if((ch == openQuote) && !isQuoteEscaped(i,string))
+                if((ch == openQuote) && !toffle.isQuoteEscaped(i,string))
                 {
                     inString = false;
                 }
@@ -1387,7 +1462,7 @@ toffle.isQuoteEscaped = function(index, string)
 }; 
 
 /**
-*	Takes a compiled template and genertes an AST of tokens from our one-dimensional list.
+*	Takes a compiled template and generates an AST of tokens from our one-dimensional list.
 */
 toffle.generateTokenAST = function(template){
 	// Create the tree.
