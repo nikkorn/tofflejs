@@ -1,9 +1,5 @@
 function toffle(){};
 
-var updOpen = '<^';
-var updClose = '^>';
-var updContentClose = '<^/^>';
-
 /**
 * ToffleJS token types.
 */
@@ -1096,7 +1092,7 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
 	// Tokenise our template
 	for(var i = 0; i < (currentTemplate.templateString.length - 1); i++)
 	{
-		if(currentTemplate.templateString.slice(i, i+2) == updOpen)
+		if(currentTemplate.templateString.slice(i, i+2) == '<^')
 		{
 			if(content.length > 0)
 			{
@@ -1109,7 +1105,7 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
 			currentTemplate.openTokens.push(i);
 			isTokenUnclosed = true;
 		} 
-		else if(currentTemplate.templateString.slice(i, i+2) == updClose)
+		else if(currentTemplate.templateString.slice(i, i+2) == '^>')
 		{
 			// Iterate over closing marker.
 			i += 2;
@@ -1169,7 +1165,7 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
 	var tokenObj;
 
 	// First step is to determine if this token is a content closer.
-	if(token == updContentClose)
+	if(token == '<^/^>')
 	{
 		return new toffle.tokenType.CLS();
 	}
