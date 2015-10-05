@@ -74,37 +74,30 @@ Our output HTML:
 
 <div id='exampleoutput'>
 <h1>First Name:</h1>
-<h2>Nikolas</h2><br>
+<h2>Nikolas</h2>
 
 <h1>Second Name:</h1>
-<h2>Howard</h2><br>
+<h2>Howard</h2>
 
 <h3>Pets:</h3>
- 
 	
 <hr>
 <p>Pet Owner: Nikolas</p>
 <p>Name: Wilfred</p>
 <p>Cuteness Level: 6</p>
 <hr>
-
- 
 	
 <hr>
 <p>Pet Owner: Nikolas</p>
 <p>Name: Scrabbles</p>
 <p>Cuteness Level: 4</p>
 <hr>
-
- 
 	
 <hr>
 <p>Pet Owner: Nikolas</p>
 <p>Name: Neighbour Cat</p>
 <p>Cuteness Level: 1</p>
 <hr>
-
-
 
 <h3>Age</h3>
 <p>25</p><br>
