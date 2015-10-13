@@ -37,7 +37,7 @@
         
         <h4>Pets:</h4>
         <^ each pet in input.pets ^> 
-            <^ plug pettemplate pet "waffles"^>
+            <^ plug pettemplate pet "Waffles and IceCream"^>
         <^/^>
         
         <h4>Pets supercute:</h4>
@@ -48,9 +48,9 @@
         <h3>Age</h3>
         <p><^ input.age ^></p><br>
         
-        <^ if input.age ^> There is an age! <^/^>
+        <^ if input.isLoved ^> There is an age! <^/^>
         
-        <^ ??isBetween input.age 20 40 ^> Between 20 and 40!!! <^/^>
+        <^ ??isBetween input.age 20 true 40 ^> Between 20 and 40!!! <^/^>
     </script>
     
     <script id="pettemplate" type="text/toffle-template" data-params="petInfo|faveFood">
@@ -71,7 +71,8 @@
             fName:"Nikolas",
             sName:"Howard",
             favouritefood:"Egg Custard Tarts",
-            age:5,
+			isLoved: null,
+            age:25,
             pets:[
                 {
                     name:"Wilfred",
@@ -108,7 +109,7 @@
             var d = new Date();
             var startTime = d.getTime();
             
-            var mytemp = toffle.template({
+            mytemp = toffle.template({
                 template: document.getElementById('myInfoTemplate'),
                 helpers: {
                     isYoungerThan: function(age, targetAge){
@@ -117,8 +118,8 @@
                     catIsSuperCute: function(cat){
                         return cat.cutenessLevel > 4;
                     },
-                    isBetween: function(age, lower, upper){
-                        return (age >= lower) && (age <= upper)
+                    isBetween: function(age, lower, testbool, upper){
+                        return (age >= lower) && (age <= upper) && testbool
                     }
                 }
             });

@@ -503,7 +503,11 @@ toffle.template = function(template){
 							var argument = templateContext.params[paramIdentifierArrayCounter];
 							
 							// Now get the actual value of our argument
-							if((argument.charAt(0) == "'" && argument.charAt(argument.length - 1) == "'") || 
+							if(((typeof argument) === "boolean") || argument === null)
+							{
+								// We have a boolean or a null value, do nothing
+							}
+							else if((argument.charAt(0) == "'" && argument.charAt(argument.length - 1) == "'") || 
 								(argument.charAt(0) == '"' && argument.charAt(argument.length - 1) == '"'))
 							{
 								argument = argument.substring(1, argument.length - 1);
@@ -552,7 +556,11 @@ toffle.template = function(template){
 								var currentArgument = token.arguments[argumentIndex];
 								
 								// set each argument to be its evaluated value
-								if((currentArgument.charAt(0) == "'" && currentArgument.charAt(currentArgument.length - 1) == "'") || 
+								if(((typeof currentArgument) === "boolean") || currentArgument === null) 
+								{
+									// We have a boolean or a null value, do nothing
+								}
+								else if((currentArgument.charAt(0) == "'" && currentArgument.charAt(currentArgument.length - 1) == "'") || 
 									(currentArgument.charAt(0) == '"' && currentArgument.charAt(currentArgument.length - 1) == '"'))
 								{
 									token.arguments[argumentIndex] = currentArgument.substring(1, currentArgument.length - 1);
@@ -1415,6 +1423,25 @@ toffle.parseRawArgumentList = function(string)
     {
         args.push(argBuff);
         argBuff = "";
+    }
+	
+	// We have to find boolean and null literals and set the accrodingly
+	for(var i = 0; i < args.length; i++)
+    {
+        var currentArg = args[i];
+		
+		if(currentArg === "true")
+		{
+			args[i] = true;
+		}
+		else if(currentArg === "false")
+		{
+			args[i] = false;
+		}
+		else if(currentArg === "null")
+		{
+			args[i] = null;
+		}
     }
     
     // return the array of parsed arguments.
