@@ -14,5 +14,8 @@
 	},{
 		"version":"1.10", 
 		"desc":"Added goOver() function as well as vastly improving the way helper/template arguments are parsed and managed. Commented everything and did some major cleaning up. Fixed numerous bugs."
+	},{
+		"version":"1.11", 
+		"desc":"Fixed issue where parseRawArgumentList() returned boolean and null literals as strings. Also fixed issue where these literals were incorrectly processed as property accessors."
 	}
 ]}
