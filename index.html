@@ -37,12 +37,12 @@
         
         <h4>Pets:</h4>
         <^ each pet in input.pets ^> 
-            <^ plug pettemplate pet "Waffles and IceCream"^>
+            <^ plug pettemplate pet false "Waffles and IceCream"^>
         <^/^>
         
         <h4>Pets supercute:</h4>
         <^ match pet in ??catIsSuperCute input.pets ^> 
-            <^ plug pettemplate pet input.pets[[0]].name^>
+            <^ plug pettemplate pet true input.pets[[0]].name^>
         <^/^>
         
         <h3>Age</h3>
@@ -53,10 +53,11 @@
         <^ ??isBetween input.age 20 true 40 ^> Between 20 and 40!!! <^/^>
     </script>
     
-    <script id="pettemplate" type="text/toffle-template" data-params="petInfo|faveFood">
+    <script id="pettemplate" type="text/toffle-template" data-params="petInfo|valtest|faveFood">
         <hr>
         <p>Name: <^ petInfo.name ^> just loves <^ faveFood ^></p>
         <p>Cuteness Level: <^ petInfo.cutenessLevel ^></p>
+        <^ if valtest ^> HELLO! <^/^>
         <hr>
     </script>
 
