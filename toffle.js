@@ -224,7 +224,7 @@ toffle.template = function(template){
 						output = output + token.value;
 						break;
 						
-						// If the token is 'ref' then spit out evaluated value
+					// If the token is 'ref' then spit out evaluated value
 					case 'ref' :
 						try
 						{
@@ -506,16 +506,17 @@ toffle.template = function(template){
 							if(((typeof argument) === "boolean") || argument === null)
 							{
 								// We have a boolean or a null value, do nothing
+								templateContext.params[paramIdentifier] = argument;
 							}
 							else if((argument.charAt(0) == "'" && argument.charAt(argument.length - 1) == "'") || 
 								(argument.charAt(0) == '"' && argument.charAt(argument.length - 1) == '"'))
 							{
-								argument = argument.substring(1, argument.length - 1);
+								templateContext.params[paramIdentifier] = argument.substring(1, argument.length - 1);
 							}
 							else if(!isNaN(argument)) 
 							{
 								// We have a number, set it 
-								argument = Number(argument);
+								templateContext.params[paramIdentifier] = Number(argument);
 							}
 							else
 							{
@@ -528,11 +529,8 @@ toffle.template = function(template){
 								var value = this.grabValue(paramPool, idents);
 								
 								// Set the evaluated value
-								argument = value;
+								templateContext.params[paramIdentifier] = value;
 							}
-							
-							// We now have the evaluated value and the identifier, we can set this in the params object of the current context.
-							templateContext.params[paramIdentifier] = argument
 						}
 						
 						// Push the template context onto the stack.
@@ -546,8 +544,14 @@ toffle.template = function(template){
 						// Check that there is a matching helper function.
 						if(this.hlprFunctions[token.func])
 						{
-                            // Parse the helper arguments into an array of arguments.
-                            token.arguments = toffle.parseRawArgumentList(token.arguments);
+                            // Parse the helper arguments into an array of arguments, only if they have not already been parsed in an earlier call to go()
+                            if(!(token.arguments instanceof Array))
+                            {
+                            	token.arguments = toffle.parseRawArgumentList(token.arguments);
+                            }
+
+                            // Keep a list of evaluated argument values.
+                            var evaluatedArguments = [];
                             
 							// Iterate over each helper function argument and replace it with the actual evaluated value.
 							for(var argumentIndex = 0; argumentIndex < token.arguments.length; argumentIndex++)
@@ -559,16 +563,17 @@ toffle.template = function(template){
 								if(((typeof currentArgument) === "boolean") || currentArgument === null) 
 								{
 									// We have a boolean or a null value, do nothing
+									evaluatedArguments[argumentIndex] = currentArgument;
 								}
 								else if((currentArgument.charAt(0) == "'" && currentArgument.charAt(currentArgument.length - 1) == "'") || 
 									(currentArgument.charAt(0) == '"' && currentArgument.charAt(currentArgument.length - 1) == '"'))
 								{
-									token.arguments[argumentIndex] = currentArgument.substring(1, currentArgument.length - 1);
+									evaluatedArguments[argumentIndex] = currentArgument.substring(1, currentArgument.length - 1);
 								}
 								else if(!isNaN(currentArgument)) 
 								{
 									// We have a number, set it 
-									token.arguments[argumentIndex] = Number(currentArgument);
+									evaluatedArguments[argumentIndex] = Number(currentArgument);
 								}
 								else
 								{
@@ -580,12 +585,12 @@ toffle.template = function(template){
 									var value = this.grabValue(paramPool, idents);
 									
 									// Set the evaluated value
-									token.arguments[argumentIndex] = value;
+									evaluatedArguments[argumentIndex] = value;
 								}
 							}
 							
 							// Call the helper function, passing the evaluated arguments, and get the boolean result.
-							var condition = this.hlprFunctions[token.func].apply(this, token.arguments);
+							var condition = this.hlprFunctions[token.func].apply(this, evaluatedArguments);
 							
 							// If condition is true then push a new context onto the stack.
 							if(condition)

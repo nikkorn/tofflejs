@@ -59,10 +59,6 @@
         <p>Cuteness Level: <^ petInfo.cutenessLevel ^></p>
         <hr>
     </script>
-	
-	<script id="caketemplate" type="text/toffle-template">
-        <p>Cake is <^ cake.type ^></p>
-    </script>
 
     <script>
 
@@ -96,43 +92,36 @@
                 }
             ]
         };
-		
-		var cakes = [
-			{type:"good"},
-			{type:"ok"},
-			{type:"bad"}
-		];
+
+        var myTemp;
 
         function generateMarkup()
         {
             // lets see how long it takes do generate our markup using our templates.
             var d = new Date();
             var startTime = d.getTime();
+
+            if(!myTemp)
+            {
+            	myTemp = toffle.template({
+	                template: document.getElementById('myInfoTemplate'),
+	                helpers: {
+	                    isYoungerThan: function(age, targetAge){
+	                        return age < targetAge;
+	                    },
+	                    catIsSuperCute: function(cat){
+	                        return cat.cutenessLevel > 4;
+	                    },
+	                    isBetween: function(age, lower, testbool, upper){
+	                        return (age >= lower) && (age <= upper) && testbool
+	                    }
+	                }
+	            });
+            }
             
-            mytemp = toffle.template({
-                template: document.getElementById('myInfoTemplate'),
-                helpers: {
-                    isYoungerThan: function(age, targetAge){
-                        return age < targetAge;
-                    },
-                    catIsSuperCute: function(cat){
-                        return cat.cutenessLevel > 4;
-                    },
-                    isBetween: function(age, lower, testbool, upper){
-                        return (age >= lower) && (age <= upper) && testbool
-                    }
-                }
-            });
-            var output = mytemp.go({ input: json }); 
-			
-			var mytempcake = toffle.template({
-                template: document.getElementById('caketemplate'),
-            });
-            var cakeoutput = mytempcake.goOver(cakes, "cake"); 
+            var output = myTemp.go({ input: json }); 
 			
             document.getElementById('container').innerHTML = output; 
-			
-			document.getElementById('cakeContainer').innerHTML = cakeoutput;
             
             // display the elapsed time
             document.getElementById("TimerBox").innerHTML = "Time Taken: " + ((new Date().getTime() - startTime) / 1000) + "ms" ;
