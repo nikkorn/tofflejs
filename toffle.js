@@ -1228,7 +1228,6 @@ toffle.parseRawArgumentList = function(string) {
             argBuff = argBuff + ch;
         }
     }
-
     if (argBuff.length > 0) {
         args.push(argBuff);
         argBuff = "";
@@ -1298,10 +1297,13 @@ toffle.generateTokenAST = function(template) {
         } else {
             // Check for closing token
             if (token.type == 'cls') {
-                // This is a closing token, pop the current off the stack.
-                var currentToken = tree.pop();
+                // Make sure that this closing token is not misplaced and that we have something to pop.
+                if(tree.length > 1) {
+                    // This is a closing token, pop the current off the stack.
+                    var currentToken = tree.pop();
 
-                tree[tree.length - 1].tokens.push(currentToken);
+                    tree[tree.length - 1].tokens.push(currentToken);
+                }
             } else {
                 // Get the current token.
                 var currentToken = tree[tree.length - 1];
@@ -1315,3 +1317,4 @@ toffle.generateTokenAST = function(template) {
     // Return our root token.
     return tree[0];
 };
+
