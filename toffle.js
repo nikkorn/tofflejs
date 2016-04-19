@@ -1125,11 +1125,11 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
                     }
                 } else {
                     // No 'in' keyword, Error.
-                    throw "toffle: Compilation failed! Incorrect 'each' declaration, missing 'in'.";
+                    throw "toffle: Compilation failed! Incorrect 'match' declaration, missing 'in'.";
                 }
             } else {
                 // Not enough sub tokens to form a valid 'each' statement, Error.
-                throw "toffle: Compilation failed! Incorrect 'each' declaration.";
+                throw "toffle: Compilation failed! Incorrect 'match' declaration.";
             }
             break;
 
