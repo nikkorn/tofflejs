@@ -1,17 +1,16 @@
 describe("Parse Reference", function() {
-    var preProcessedTemplatesObject;
 
     beforeEach(function() {
         // parseReference() is a function of the object which is returned after successfully
         // pre-processing a template. Do a basic pre-processing of an empty template to get it.
-        preProcessedTemplatesObject = toffle.template({
+        this.preProcessedTemplatesObject = toffle.template({
             template: document.getElementById('EmptyTemplate')
         });
     });
     
     it("should cope with a single identifier", function() {
         var propertyName = "property";
-        var parsedReference = preProcessedTemplatesObject.parseReference(propertyName);
+        var parsedReference = this.preProcessedTemplatesObject.parseReference(propertyName);
         expect(parsedReference).toBeDefined();
         expect(parsedReference.idents.length).toEqual(1);
         expect(parsedReference.idents[0].name).toEqual(propertyName);
@@ -21,7 +20,7 @@ describe("Parse Reference", function() {
         var parentObjectName = "object";
         var childPropertyName = "property";
         var composedPropertyAccessor = parentObjectName + "." + childPropertyName;
-        var parsedReference = preProcessedTemplatesObject.parseReference(composedPropertyAccessor);
+        var parsedReference = this.preProcessedTemplatesObject.parseReference(composedPropertyAccessor);
         expect(parsedReference).toBeDefined();
         expect(parsedReference.idents.length).toEqual(2);
         expect(parsedReference.idents[0].name).toEqual(parentObjectName);
@@ -34,7 +33,7 @@ describe("Parse Reference", function() {
             var parentObjectName = "object";
             var nestedReference = "property";
             var composedPropertyAccessor = parentObjectName + "[" + nestedReference + "]";
-            var parsedReference = preProcessedTemplatesObject.parseReference(composedPropertyAccessor);
+            var parsedReference = this.preProcessedTemplatesObject.parseReference(composedPropertyAccessor);
             expect(parsedReference).toBeDefined();
             expect(parsedReference.idents.length).toEqual(1);
             expect(parsedReference.idents[0].name).toEqual(parentObjectName);
@@ -46,7 +45,7 @@ describe("Parse Reference", function() {
             var parentObjectName = "object";
             var literalPropertyName = "property";
             var composedPropertyAccessor = parentObjectName + "[[" + literalPropertyName + "]]";
-            var parsedReference = preProcessedTemplatesObject.parseReference(composedPropertyAccessor);
+            var parsedReference = this.preProcessedTemplatesObject.parseReference(composedPropertyAccessor);
             expect(parsedReference).toBeDefined();
             expect(parsedReference.idents.length).toEqual(2);
             expect(parsedReference.idents[0].name).toEqual(parentObjectName);
