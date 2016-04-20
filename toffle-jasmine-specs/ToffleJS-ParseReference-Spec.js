@@ -1,7 +1,17 @@
 describe("Parse Reference", function() {
+    var preProcessedTemplatesObject;
+
+    beforeEach(function() {
+        // Create a spy for the compileTemplate to stop it being called.
+        toffle.compileTemplate = jasmine.createSpy("compileTemplate spy");
+        // parseReference() is a function of the object which is returned after successfully
+        // pre-processing a template. Do a basic pre-processing of an empty template to get it.
+        preProcessedTemplatesObject = toffle.template({
+            template: document.getElementById('EmptyTemplate')
+        });
+    });
     
     it("should cope with a single identifier", function() {
-        var preProcessedTemplatesObject = toffle.template({ template: document.getElementById('EmptyTemplate') });
         var propertyName = "property";
         var parsedReference = preProcessedTemplatesObject.parseReference(propertyName);
         expect(parsedReference).toBeDefined();
@@ -10,7 +20,6 @@ describe("Parse Reference", function() {
     });
     
     it("should cope with dot notation", function() {
-        var preProcessedTemplatesObject = toffle.template({ template: document.getElementById('EmptyTemplate') });
         var parentObjectName = "object";
         var childPropertyName = "property";
         var composedPropertyAccessor = parentObjectName + "." + childPropertyName;
@@ -24,7 +33,6 @@ describe("Parse Reference", function() {
     describe("when dealing with bracket notation", function() {
         
         it("should cope with a nested property accessor 'object[property_accessor]'", function() {
-            var preProcessedTemplatesObject = toffle.template({ template: document.getElementById('EmptyTemplate') });
             var parentObjectName = "object";
             var nestedReference = "property";
             var composedPropertyAccessor = parentObjectName + "[" + nestedReference + "]";
@@ -37,7 +45,6 @@ describe("Parse Reference", function() {
         });
     
         it("should cope with a literal property name 'object[[property_name]]'", function() {
-            var preProcessedTemplatesObject = toffle.template({ template: document.getElementById('EmptyTemplate') });
             var parentObjectName = "object";
             var literalPropertyName = "property";
             var composedPropertyAccessor = parentObjectName + "[[" + literalPropertyName + "]]";
