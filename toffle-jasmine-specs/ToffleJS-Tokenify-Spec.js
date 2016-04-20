@@ -154,7 +154,7 @@ describe("Tokeinfy", function() {
             var processedToken = toffle.tokenify(rawPlugToken, null, [], []);
             expect(toffle.compileTemplate).toHaveBeenCalled();
             // Check that the correct template DOM element was passed as an argument.
-            expect(toffle.compileTemplate.calls.argsFor(0)[0].id).toEqual(subTemplateId);
+            expect(toffle.compileTemplate.calls.mostRecent().args[0].id).toEqual(subTemplateId);
         });
     });
     
