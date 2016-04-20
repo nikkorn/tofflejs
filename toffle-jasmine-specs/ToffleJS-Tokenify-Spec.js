@@ -1,12 +1,19 @@
 describe("Tokeinfy", function() {
-
-    beforeEach(function() { });
     
     it("should correctly process a raw closing token", function() {
         var rawClosingToken = "<^/^>";
         var processedToken = toffle.tokenify(rawClosingToken, null, null, null);
         expect(processedToken).toBeDefined();
         expect(processedToken.type).toEqual("cls");
+    });
+    
+    it("should correctly process a property accessor", function() {
+        var propertyAccessor = "x";
+        var rawPropertyAccessorToken = "<^ " + propertyAccessor + " ^>";
+        var processedToken = toffle.tokenify(rawPropertyAccessorToken, null, null, null);
+        expect(processedToken).toBeDefined();
+        expect(processedToken.type).toEqual("ref");
+        expect(processedToken.value).toEqual(propertyAccessor);
     });
     
     describe("when processing a raw IF token", function() {
@@ -108,26 +115,69 @@ describe("Tokeinfy", function() {
         });
     });
     
-    it("should correctly process a raw PLUG token", function() {
-       // TODO
-    });
-    
-    it("should correctly process a property accessor", function() {
-       // TODO
+    describe("when processing a raw PLUG token", function() {
+        
+        beforeEach(function() {
+            // Create a spy for the compileTemplate to stop it being called.
+            toffle.compileTemplate = jasmine.createSpy("compileTemplate spy");
+        });
+        
+        describe("when supplying an argument", function() {
+            
+            it("should correctly return the expected PLUG token object", function() {
+                var subTemplateId = "EmptyTemplateWithArg";
+                var subTemplateArgument = "0";
+                var rawPlugToken = "<^ plug " + subTemplateId + " " + subTemplateArgument + " ^>";
+                var processedToken = toffle.tokenify(rawPlugToken, null, [], []);
+                expect(processedToken).toBeDefined();
+                expect(processedToken.type).toEqual("template");
+                expect(processedToken.template).toEqual(subTemplateId);
+                expect(processedToken.params).toEqual(subTemplateArgument);
+            });
+        });
+        
+        describe("when supplying no arguments", function() {
+            
+            it("should correctly return the expected PLUG token object", function() {
+                var subTemplateId = "EmptyTemplate";
+                var rawPlugToken = "<^ plug " + subTemplateId + " ^>";
+                var processedToken = toffle.tokenify(rawPlugToken, null, [], []);
+                expect(processedToken).toBeDefined();
+                expect(processedToken.type).toEqual("template");
+                expect(processedToken.template).toEqual(subTemplateId);
+            });
+        });
+        
+        it("should call compileTemplate() function for the referenced template", function() {
+            var subTemplateId = "EmptyTemplate";
+            var rawPlugToken = "<^ plug " + subTemplateId + " ^>";
+            var processedToken = toffle.tokenify(rawPlugToken, null, [], []);
+            expect(toffle.compileTemplate).toHaveBeenCalled();
+            // Check that the correct template DOM element was passed as an argument.
+            expect(toffle.compileTemplate.calls.argsFor(0)[0].id).toEqual(subTemplateId);
+        });
     });
     
     describe("when dealing with helper function calls", function() {
         
         it("should cope with an empty argument list", function() {
-            // TODO
+            var helperFunction  = "tester";
+            var rawHelperToken = "<^ ??" + helperFunction + " ^>";
+            var processedToken = toffle.tokenify(rawHelperToken, null, null, null);
+            expect(processedToken).toBeDefined();
+            expect(processedToken.type).toEqual("helper");
+            expect(processedToken.func).toEqual("tester");
         });
         
-        it("should cope with a single argument", function() {
-            // TODO
-        });
-        
-         it("should cope with a multiple arguments", function() {
-            // TODO Attempt algebraic testing
+        it("should cope with arguments", function() {
+            var helperFunction  = "tester";
+            var helperFunctionArgs  = "x y";
+            var rawHelperToken = "<^ ??" + helperFunction + " " + helperFunctionArgs + " ^>";
+            var processedToken = toffle.tokenify(rawHelperToken, null, null, null);
+            expect(processedToken).toBeDefined();
+            expect(processedToken.type).toEqual("helper");
+            expect(processedToken.func).toEqual(helperFunction);
+            expect(processedToken.arguments).toEqual(helperFunctionArgs);
         });
     });
 });
