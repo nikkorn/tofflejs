@@ -1172,7 +1172,7 @@ toffle.tokenify = function(token, currentTemplate, pendingTemplates, templates) 
             // SIMPLE REFERENCES
         default:
             // check for helpers (start with '??')
-            if (subTokens[0].length > 1 && (subTokens[0].substring(0, 2) == '??')) {
+            if (subTokens[0].length > 0 && (subTokens[0].substring(0, 2) == '??')) {
                 // Set our token type.
                 tokenObj = new toffle.tokenType.HELPER();
 
