@@ -28,7 +28,7 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-        '**/toffle.js': 'coverage'
+        'toffle.js': 'coverage'
     },
 
 
@@ -69,6 +69,11 @@ module.exports = function(config) {
         'karma-firefox-launcher',
         'karma-coverage'
     ],
+    
+    coverageReporter: {
+        type: 'text',
+        dir: 'coverage/'
+    },
 
     // Concurrency level
     // how many browser should be started simultaneous
