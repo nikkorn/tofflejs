@@ -55,6 +55,26 @@ describe("Grab Value", function() {
     });
     
     it("should return the expected value when dealing with nested references", function() {
-        
+        var testParentObjectName = "test_parent_name";
+        var testSubReference = "test_sub_reference_name";
+        var testSubReferenceTargetValue = "test_sub_reference_target_value";
+        var testTargetValue = "test_target_value";
+        // Construct our mock data object containing the object or property we want the value of. 
+        var testValuesObject = {};
+        var testParentObject = {};
+        testParentObject[testSubReferenceTargetValue] = testTargetValue;
+        testValuesObject[testSubReference] = testSubReferenceTargetValue;
+        testValuesObject[testParentObjectName] = testParentObject;
+        // Create the data structure that represents a property accessor.
+        var testRerefenceStructure = [{
+            name: testParentObjectName,
+            sub: [{
+                name: testSubReference,
+                sub: []
+            }]
+        }];
+        // Attempt to get the value.
+        var grabbedValue = preProcessedTemplatesObject.grabValue(testValuesObject, testRerefenceStructure);
+        expect(grabbedValue).toEqual(testTargetValue);
     });
 }); 
