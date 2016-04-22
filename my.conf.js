@@ -16,6 +16,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'toffle.js',
+      'jasmine-ieee829-decorator.js',
       'toffle-jasmine-specs/*.js'
     ],
 
