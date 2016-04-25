@@ -3,7 +3,7 @@ describe("Grab Value", function() {
 
     beforeEach(function() {
         // Create a spy for the compileTemplate to stop it being called.
-        toffle.compileTemplate = jasmine.createSpy("compileTemplate spy");
+        spyOn(toffle, "compileTemplate");
         // grabValue() is a function of the object which is returned after successfully
         // pre-processing a template. Do a basic pre-processing of an empty template to get it.
         preProcessedTemplatesObject = toffle.template({

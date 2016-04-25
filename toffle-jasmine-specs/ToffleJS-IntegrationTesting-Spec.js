@@ -1,19 +1,21 @@
-
 describe("Template Pre-compilation", function() {
-    
-  beforeEach(function() {
-      
-  });
     
   it("works correctly when processing an individual empty template", function() {
       var emptyTemplate = document.getElementById('EmptyTemplate');
       if(emptyTemplate == null) {
         populateDOMWithTemplateDefinitions();
+        emptyTemplate = document.getElementById('EmptyTemplate');
       }
-      //var preProcessedTemplate = toffle.template({
-          //template: document.getElementById('EmptyTemplate')
-      //});
-      expect(document.getElementById('EmptyTemplate')).not.toBe(null);
+      var precompiledTemplatesList = [];
+      // Attempt to pre-compile the empty template.
+      toffle.compileTemplate(emptyTemplate, true, [], precompiledTemplatesList);
+      // We are expecting a single precompiled template.
+      expect(precompiledTemplatesList.length).toBe(1);
+      expect(precompiledTemplatesList[0].name).toEqual("EmptyTemplate");
+      // This template should be empty and contain no static content.
+      expect(precompiledTemplatesList[0].temp.templateString).toEqual("");
+      // This template should be empty not wrap any other tokens.
+      expect(precompiledTemplatesList[0].temp.tokens.length).toEqual(0);
   });
   
   it("works correctly when processing a template with a property accessor", function() {

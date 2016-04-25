@@ -119,7 +119,7 @@ describe("Tokeinfy", function() {
         
         beforeEach(function() {
             // Create a spy for the compileTemplate to stop it being called.
-            toffle.compileTemplate = jasmine.createSpy("compileTemplate spy");
+            spyOn(toffle, "compileTemplate");
         });
         
         describe("when supplying an argument", function() {
