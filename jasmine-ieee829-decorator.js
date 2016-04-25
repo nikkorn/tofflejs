@@ -1,5 +1,7 @@
 // Holder for all of our test spec definitions.
 var testSpecRoot = []; 
+var reporterPresent = false;
+var reporter;
 
 jasmine.getEnv().addReporter({
     jasmineStarted: function () {
@@ -23,7 +25,7 @@ jasmine.getEnv().addReporter({
         testSpecRoot[testSpecRoot.length - 1].lastRunStatus = result.status;
     },
     jasmineDone: function () {
-        printTestSpecDefinitionToConsole();
+        printTestSpecDefinitionToReporter();
     }
 });
 
@@ -62,36 +64,55 @@ function defineData(dataItemName, dataItemType, desc) {
     }
 };
 
-function printTestSpecDefinitionToConsole() {
+function printTestSpecDefinitionToReporter() {
+	// Determine if the jasmine reporter has done its thing and we have output in the DOM.
+	reporter = document.getElementsByClassName("jasmine_html-reporter")[0];
+	if (typeof(reporter) != 'undefined' && reporter != null) {
+	   reporterPresent = true;
+	   appendToReporter("");
+	   appendToReporter("IEEE 829 Test Specification");
+	   appendToReporter("---------------------------");
+	   appendToReporter("");
+	} else {
+	   // no reporter to append to. 
+	   return;
+	}
+
     for(var specIndex = 0; specIndex < testSpecRoot.length; specIndex++) {
         var currentSpec = testSpecRoot[specIndex];
         // print spec id
-        console.log("Unique Test ID   : " + currentSpec.specId);
+		appendToReporter("Unique Test ID   : " + currentSpec.specId);
         // print test name
-        console.log("Test Name        : " + currentSpec.specName);
+		appendToReporter("Test Name        : " + currentSpec.specName);
         // print test element
-        console.log("Test Element     : " + currentSpec.testElement);
+		appendToReporter("Test Element     : " + currentSpec.testElement);
         // print valid and invalid response
-        console.log("Valid Response   : " + currentSpec.validResponse);
-        console.log("Invalid Response : " + currentSpec.invalidResponse);
+		appendToReporter("Valid Response   : " + currentSpec.validResponse);
+		appendToReporter("Invalid Response : " + currentSpec.invalidResponse);
         // print extended description (if there is one)
         if(currentSpec.desc != null) {
-            console.log("Description cont.: " + currentSpec.desc);
+		    appendToReporter("Description cont.: " + currentSpec.desc);
         }
-        console.log("Last Run DT      : " + currentSpec.lastRunDT);
-        console.log("Last Run Result  : " + currentSpec.lastRunStatus);
+        appendToReporter("Last Run DT      : " + currentSpec.lastRunDT);
+        appendToReporter("Last Run Result  : " + currentSpec.lastRunStatus);
         // print data items (if any were defined)
         if(currentSpec.dataItems.length > 0) {
-            console.log("Data Items : ");
+		    appendToReporter("Data Items : ");
             for(var itemIndex = 0; itemIndex < currentSpec.dataItems.length; itemIndex++) {
                 var currentDataItem = currentSpec.dataItems[itemIndex];
-                console.log("    Item Name        : " + currentDataItem.dataItemName);
-                console.log("    Item Type        : " + currentDataItem.dataItemType);
-                console.log("    Item Description : " + currentDataItem.dataItemDesc);
-                console.log();
+		        appendToReporter("    Item Name        : " + currentDataItem.dataItemName);
+		        appendToReporter("    Item Type        : " + currentDataItem.dataItemType);
+		        appendToReporter("    Item Description : " + currentDataItem.dataItemDesc);
+		        appendToReporter("");
             }
         }
         // We want a gap between test desriptions.
-        console.log();
+		appendToReporter("");
     }
 };
+
+function appendToReporter(value) {
+	if(reporterPresent) {
+		reporter.innerHTML = reporter.innerHTML + value + "<br>";
+	}
+}
