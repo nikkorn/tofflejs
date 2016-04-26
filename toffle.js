@@ -957,9 +957,13 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
 
     // Variable to store template content.
     var content = "";
+    
+    var op = false;
 
     // Tokenise our template
     for (var i = 0; i < (currentTemplate.templateString.length); i++) {
+        var expectingOpeningToken = false;
+        
         if (currentTemplate.templateString.slice(i, i + 2) == '<^') {
             if (content.length > 0) {
                 var contentToken = new toffle.tokenType.CONTENT();
@@ -973,6 +977,11 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
         } else if (currentTemplate.templateString.slice(i, i + 2) == '^>') {
             // Iterate over closing marker.
             i += 2;
+            
+            // Are we expecting an open token on the next iteration.
+            if (currentTemplate.templateString.slice(i, i + 2) == '<^') {
+                expectingOpeningToken = true;   
+            }
 
             isTokenUnclosed = false;
             var openingTokenIndex = currentTemplate.openTokens.pop();
@@ -987,9 +996,16 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
             currentTemplate.tokens.push(newToken);
         }
 
-        // Add current character to our content variable.
-        if (!isTokenUnclosed) {
-            content += currentTemplate.templateString.charAt(i);
+        // If we are expecting an opening token on the next iteration. Therefore we wont be appending to 
+        // content and need to decrement 'i' to make sure we dont eat the opening '<' of the next token.
+        if(expectingOpeningToken) {
+            i = i-1;
+            expectingOpeningToken = false;
+        } else {
+            // Add current character to our content variable.
+            if (!isTokenUnclosed) {
+                content += currentTemplate.templateString.charAt(i);
+            }
         }
     }
 
