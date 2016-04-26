@@ -112,4 +112,41 @@ describe("Template Execution", function() {
       // We are only expecting the first condition to evaluate to true.
       expect(result).toEqual(testFirstNotWrappedContent);
   });
+  
+  it("generates expected ouptut when evaluating a template wrapping helper functions", function() {
+      var testFirstHelperWrappedContent  = "FIRST";
+      var testSecondHelperWrappedContent = "SECOND";
+      var testThirdHelperWrappedContent  = "THIRD";
+      var testFourthHelperWrappedContent = "FOURTH";
+      // Define an input context.
+      var testInputContext = {
+            var1: -1,
+            var2: 5,
+            var3: 0,
+            var4: 1
+      };
+      var templateDiv = document.createElement("div");
+      templateDiv.innerHTML = '<script id="FuncTestTemplateWithHelpers" type="text/toffle-template">' +
+      '<^ ??isGreaterThanZero var1 ^>' + testFirstHelperWrappedContent + '<^/^>' + 
+      '<^ ??isGreaterThanZero var2 ^>' + testSecondHelperWrappedContent + '<^/^>' + 
+      '<^ ??isGreaterThanZero var3 ^>' + testThirdHelperWrappedContent + '<^/^>' + 
+      '<^ ??isGreaterThanZero var4 ^>' + testFourthHelperWrappedContent + '<^/^></script>';
+      document.body.appendChild(templateDiv);
+      // Get our empty template from the DOM
+      var initialTemplate = document.getElementById('FuncTestTemplateWithHelpers');
+      // Pre-process our empty template and define the helper function we are using to test.
+      var preProcessedTemplate = toffle.template({
+            template: initialTemplate,
+            helpers: {
+                isGreaterThanZero: function(value){
+                    return value > 0;
+                }
+            }
+      });
+      // Evaluate our template, passing our test context. We expect the correct interpolated output. This
+      // would be the content wrapped by the helper statements which return true based on some input argument/s.
+      var result = preProcessedTemplate.go(testInputContext);
+      // We are only expecting the second and fourth helper function to evaluate to true.
+      expect(result).toEqual(testSecondHelperWrappedContent + testFourthHelperWrappedContent);
+  });
 });
