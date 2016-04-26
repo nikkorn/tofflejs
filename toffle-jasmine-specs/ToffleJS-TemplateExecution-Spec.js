@@ -3,10 +3,10 @@ describe("Template Execution", function() {
   it("generates expected ouptut when evaluating an empty template", function() {
       // We must append our template HTML element to the DOM.
       var templateDiv = document.createElement("div");
-      templateDiv.innerHTML = '<script id="EmptyTemplate" type="text/toffle-template"></script>';
+      templateDiv.innerHTML = '<script id="FuncTestEmptyTemplate" type="text/toffle-template"></script>';
       document.body.appendChild(templateDiv);
       // Get our empty template from the DOM
-      var emptyTemplate = document.getElementById('EmptyTemplate');
+      var emptyTemplate = document.getElementById('FuncTestEmptyTemplate');
       // Pre-process our empty template.
       var preProcessedEmptyTemplate = toffle.template({
             template: emptyTemplate
@@ -32,5 +32,32 @@ describe("Template Execution", function() {
       // Evaluate our template, passing in empty dataset. We expect our static content as output.
       var result = preProcessedEmptyTemplate.go({});
       expect(result).toEqual(testStaticContent);
+  });
+  
+  it("generates expected ouptut when evaluating a template wrapping static content and reference statements", function() {
+      var testPreIdentContent = "IDENT:";
+      var testPreIDContent = "ID:";
+      // Define an input context.
+      var testInputContext = {
+            ident: "context",
+            info: {
+                    id: 0
+            }
+      };
+      // We must append our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      templateDiv.innerHTML = '<script id="FuncTestTemplateWithStaticContentAndRefs" type="text/toffle-template">' +
+        testPreIdentContent + '<^ ident ^>' + testPreIDContent + '<^ info.id ^>';
+      document.body.appendChild(templateDiv);
+      // Get our empty template from the DOM
+      var templateWithStaticContent = document.getElementById('FuncTestTemplateWithStaticContentAndRefs');
+      // Pre-process our empty template.
+      var preProcessedEmptyTemplate = toffle.template({
+            template: templateWithStaticContent
+      });
+      // Evaluate our template, passing our test context. We expect the correct interpolated output.
+      var result = preProcessedEmptyTemplate.go(testInputContext);
+      expect(result).toEqual(testPreIdentContent + testInputContext.ident + 
+        testPreIDContent + testInputContext.info.id);
   });
 });
