@@ -257,4 +257,33 @@ describe("Template Execution", function() {
       var result = preProcessedTemplate.go({});
       expect(result).toEqual(initialTemplateContent + subTemplateContent);
   });
+  
+  it("the goOver() function will process a template for each element in the input context array ", function() {
+      var testIdent = "ident";
+      // Define an input context.
+      var testInputContext = [{
+                    val: "ZERO"
+                },
+                {
+                    val: "ONE"
+                },
+                {
+                    val: "TWO"
+                }];
+      // We must our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      templateDiv.innerHTML = '<script id="FuncTestTemplateForGoOver" type="text/toffle-template"><^ ' +
+        testIdent + '.val ^></script>';
+      document.body.appendChild(templateDiv);
+      // Get our initial template.
+      var initialTemplate = document.getElementById('FuncTestTemplateForGoOver');
+      // Pre-process our initial template.
+      var preProcessedTemplate = toffle.template({
+            template: initialTemplate
+      });
+      // Evaluate our template, passing our test array context. We expect the correct interpolated output. This
+      // would be the content of the initial template, processed for each element in the input context array.
+      var result = preProcessedTemplate.goOver(testInputContext, testIdent);
+      expect(result).toEqual(testInputContext[0].val + testInputContext[1].val + testInputContext[2].val);
+  });
 });
