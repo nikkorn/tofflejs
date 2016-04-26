@@ -137,7 +137,7 @@ describe("Template Execution", function() {
       document.body.appendChild(templateDiv);
       // Get our empty template from the DOM
       var initialTemplate = document.getElementById('FuncTestTemplateWithHelpers');
-      // Pre-process our empty template and define the helper function we are using to test.
+      // Pre-process our template and define the helper function we are using to test.
       var preProcessedTemplate = toffle.template({
             template: initialTemplate,
             helpers: {
@@ -176,7 +176,7 @@ describe("Template Execution", function() {
       document.body.appendChild(templateDiv);
       // Get our empty template from the DOM
       var initialTemplate = document.getElementById('FuncTestTemplateWithEACH');
-      // Pre-process our empty template and define the helper function we are using to test.
+      // Pre-process our template.
       var preProcessedTemplate = toffle.template({
             template: initialTemplate
       });
@@ -188,5 +188,48 @@ describe("Template Execution", function() {
       testInputContext.testArray[1].ID + ":" + testInputContext.testArray[1].val +
       testInputContext.testArray[2].ID + ":" + testInputContext.testArray[2].val;
       expect(result).toEqual(expectedResult);
+  });
+  
+  it("generates expected ouptut when evaluating a template wrapping MATCH statements", function() {
+      // Define an input context.
+      var testInputContext = {
+          testArray: [{
+                    include: true,
+                    val: "ZERO"
+                },
+                {
+                    include: false,
+                    val: "ONE"
+                },
+                {
+                    include: true,
+                    val: "TWO"
+                },
+                {
+                    include: false,
+                    val: "THREE"
+                }]
+      };
+      // We must append our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      templateDiv.innerHTML = '<script id="FuncTestTemplateWithMATCH" type="text/toffle-template">' +
+        '<^ match element in ??shouldInclude testArray ^><^ element.val ^><^/^></script>';
+      document.body.appendChild(templateDiv);
+      // Get our empty template from the DOM
+      var initialTemplate = document.getElementById('FuncTestTemplateWithMATCH');
+      // Pre-process our template and define the helper function we are using to test.
+      var preProcessedTemplate = toffle.template({
+            template: initialTemplate,
+            helpers: {
+                shouldInclude: function(el){
+                    return el.include;
+                }
+            }
+      });
+      // Evaluate our template, passing our test context. We expect the correct interpolated output. This
+      // would be the content wrapped by the match statement, processed for each element in the defined array
+      // that is validated by the provided helper.
+      var result = preProcessedTemplate.go(testInputContext);
+      expect(result).toEqual(testInputContext.testArray[0].val + testInputContext.testArray[2].val);
   });
 });
