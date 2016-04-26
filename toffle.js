@@ -959,7 +959,7 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
     var content = "";
 
     // Tokenise our template
-    for (var i = 0; i < (currentTemplate.templateString.length - 1); i++) {
+    for (var i = 0; i < (currentTemplate.templateString.length); i++) {
         if (currentTemplate.templateString.slice(i, i + 2) == '<^') {
             if (content.length > 0) {
                 var contentToken = new toffle.tokenType.CONTENT();
