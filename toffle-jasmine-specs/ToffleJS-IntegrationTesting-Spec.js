@@ -84,7 +84,7 @@ describe("Template Pre-compilation", function() {
       expect(templateAST.tokens.length).toEqual(1);
       expect(templateAST.tokens[0].type).toEqual("if");
       expect(templateAST.tokens[0].condition).toEqual(testCnd);
-      // Our IF token should be wrapping a content token that represnts the static content
+      // Our IF token should be wrapping a content token that represents the static content
       // wrapped by the IF construct in our template.
       expect(templateAST.tokens[0].tokens.length).toEqual(1);
       expect(templateAST.tokens[0].tokens[0].type).toEqual("content");
@@ -114,7 +114,7 @@ describe("Template Pre-compilation", function() {
       expect(templateAST.tokens.length).toEqual(1);
       expect(templateAST.tokens[0].type).toEqual("not");
       expect(templateAST.tokens[0].condition).toEqual(testCnd);
-      // Our NOT token should be wrapping a content token that represnts the static content
+      // Our NOT token should be wrapping a content token that represents the static content
       // wrapped by the NOT construct in our template.
       expect(templateAST.tokens[0].tokens.length).toEqual(1);
       expect(templateAST.tokens[0].tokens[0].type).toEqual("content");
@@ -122,25 +122,127 @@ describe("Template Pre-compilation", function() {
   });
   
   it("works correctly when processing an individual template with an EACH token", function() {
-      
+      var testTargetArray = "TESTARRAY";
+      var testIteratorIdent = "TESTIDENT";
+      var testCnt = "CONTENT";
+      // We must append our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      var tmp = '<script id="TemplateWithEACH" type="text/toffle-template"><^ each '+
+        testIteratorIdent + ' in ' + testTargetArray + ' ^>' + testCnt + '<^/^></script>';
+      templateDiv.innerHTML = tmp;
+      document.body.appendChild(templateDiv);
+      // Get our template from the DOM
+      var templateWithEach = document.getElementById('TemplateWithEACH');
+      var precompiledTemplatesList = [];
+      // Attempt to pre-compile the empty template.
+      toffle.compileTemplate(templateWithEach, true, [], precompiledTemplatesList);
+      // We are expecting a single precompiled template.
+      expect(precompiledTemplatesList.length).toBe(1);
+      expect(precompiledTemplatesList[0].name).toEqual("TemplateWithEACH");
+      // We need to check the actual AST of our template to ensure its structure is valid.
+      var templateAST = precompiledTemplatesList[0].temp.AST;
+      // We should have only one token in the root our our AST, our NOT token.
+      expect(templateAST.tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].type).toEqual("each");
+      expect(templateAST.tokens[0].pointer).toEqual(testIteratorIdent);
+      expect(templateAST.tokens[0].reference).toEqual(testTargetArray);
+      // Our EACH token should be wrapping a content token that represents the static content
+      // wrapped by the EACH construct in our template.
+      expect(templateAST.tokens[0].tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].tokens[0].type).toEqual("content");
+      expect(templateAST.tokens[0].tokens[0].value).toEqual(testCnt);
+  });
+  
+  it("works correctly when processing an individual template with a MATCH token", function() {
+      var testTargetArray = "TESTARRAY";
+      var testIteratorIdent = "TESTIDENT";
+      var testHelper = "TESTHELPER";
+      var testCnt = "CONTENT";
+      // We must append our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      var tmp = '<script id="TemplateWithMATCH" type="text/toffle-template">' +
+        '<^ match ' + testIteratorIdent + ' in ??' + testHelper + ' ' + testTargetArray + ' ^>' + 
+        testCnt + '<^/^></script>';
+      templateDiv.innerHTML = tmp;
+      document.body.appendChild(templateDiv);
+      // Get our template from the DOM
+      var templateWithMatch = document.getElementById('TemplateWithMATCH');
+      var precompiledTemplatesList = [];
+      // Attempt to pre-compile the empty template.
+      toffle.compileTemplate(templateWithMatch, true, [], precompiledTemplatesList);
+      // We are expecting a single precompiled template.
+      expect(precompiledTemplatesList.length).toBe(1);
+      expect(precompiledTemplatesList[0].name).toEqual("TemplateWithMATCH");
+      // We need to check the actual AST of our template to ensure its structure is valid.
+      var templateAST = precompiledTemplatesList[0].temp.AST;
+      // We should have only one token in the root our our AST, our NOT token.
+      expect(templateAST.tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].type).toEqual("match");
+      expect(templateAST.tokens[0].pointer).toEqual(testIteratorIdent);
+      expect(templateAST.tokens[0].reference).toEqual(testTargetArray);
+      expect(templateAST.tokens[0].func).toEqual(testHelper);
+      // Our MATCH token should be wrapping a content token that represents the static content
+      // wrapped by the MATCH construct in our template.
+      expect(templateAST.tokens[0].tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].tokens[0].type).toEqual("content");
+      expect(templateAST.tokens[0].tokens[0].value).toEqual(testCnt);
   });
   
   it("works correctly when processing an individual template with a HELPER token", function() {
-      
+      var testHelper = "TESTHELPER";
+      var testArguments = "TESTARG1 TESTARG2";
+      var testCnt = "CONTENT";
+      // We must append our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      var tmp = '<script id="TemplateWithHELPER" type="text/toffle-template"><^ ??' + 
+        testHelper + ' ' + testArguments + ' ^>' + testCnt + '<^/^></script>';
+      templateDiv.innerHTML = tmp;
+      document.body.appendChild(templateDiv);
+      // Get our template from the DOM
+      var templateWithHelper = document.getElementById('TemplateWithHELPER');
+      var precompiledTemplatesList = [];
+      // Attempt to pre-compile the empty template.
+      toffle.compileTemplate(templateWithHelper, true, [], precompiledTemplatesList);
+      // We are expecting a single precompiled template.
+      expect(precompiledTemplatesList.length).toBe(1);
+      expect(precompiledTemplatesList[0].name).toEqual("TemplateWithHELPER");
+      // We need to check the actual AST of our template to ensure its structure is valid.
+      var templateAST = precompiledTemplatesList[0].temp.AST;
+      // We should have only one token in the root our our AST, our NOT token.
+      expect(templateAST.tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].type).toEqual("helper");
+      expect(templateAST.tokens[0].arguments).toEqual(testArguments);
+      expect(templateAST.tokens[0].func).toEqual(testHelper);
+      // Our HELPER token should be wrapping a content token that represents the static content
+      // wrapped by the HELPER construct in our template.
+      expect(templateAST.tokens[0].tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].tokens[0].type).toEqual("content");
+      expect(templateAST.tokens[0].tokens[0].value).toEqual(testCnt);
   });
   
   it("works correctly when processing a template which references another template", function() {
-      
+      var testParams = "p1 p2 p3";
+       // We must append our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      var tmp = '<script id="TemplateWithPLUG" type="text/toffle-template"><^ plug EmptyTemplate ' + 
+        testParams + ' ^></script>';
+      templateDiv.innerHTML = tmp;
+      document.body.appendChild(templateDiv);
+      // Get our template from the DOM
+      var templateWithPlug = document.getElementById('TemplateWithPLUG');
+      var precompiledTemplatesList = [];
+      // Attempt to pre-compile the empty template.
+      toffle.compileTemplate(templateWithPlug, true, [], precompiledTemplatesList);
+      // We are expecting both our initial and referenced precompiled templates.
+      expect(precompiledTemplatesList.length).toBe(2);
+      expect(precompiledTemplatesList[0].name).toEqual("EmptyTemplate");
+      expect(precompiledTemplatesList[1].name).toEqual("TemplateWithPLUG");
+      // We need to check the actual AST of our template to ensure its structure is valid.
+      var templateAST = precompiledTemplatesList[1].temp.AST;
+      // We should have only one token in the root our our AST, our NOT token.
+      expect(templateAST.tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].type).toEqual("template");
+      expect(templateAST.tokens[0].template).toEqual("EmptyTemplate");
+      expect(templateAST.tokens[0].params).toEqual(testParams);
   });
-}); 
-
-function populateDOMWithTemplateDefinitions() {
-  var templateContainer = document.createElement("div");
-  templateContainer.innerHTML = '<script id="EmptyTemplateWithArg" type="text/toffle-template" data-params="arg1"></script>' +
-    '<script id="TemplateWithNOT" type="text/toffle-template"><^ not falseCondition ^>CONTENT<^/^></script>' +
-    '<script id="TemplateWithEACH" type="text/toffle-template"><^ each x in someJSONArray ^>CONTENT<^/^></script>' +
-    '<script id="TemplateWithMATCH" type="text/toffle-template"><^ match x in ??helper someJSONArray ^>CONTENT<^/^></script>' +
-    '<script id="TemplateWithPLUG" type="text/toffle-template"><^ plug EmptyTemplate ^></script>' +
-    '<script id="TemplateWithHELPER" type="text/toffle-template"><^ ??yIsTrue y ^>CONTENT<^/^></script>';
-    document.body.appendChild(templateContainer);
-};
+});
