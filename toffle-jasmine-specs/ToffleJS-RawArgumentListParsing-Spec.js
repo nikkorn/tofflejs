@@ -8,8 +8,53 @@ describe("Raw Argument List Parsing", function() {
       expect(parsedArgumentList.length).toEqual(0);
   });
   
+  function validRawArgumentLists(size) {
+      var argList = "";
+      var stringLiteralRegex = qc.string.matching(/^[a-zA-Z]+$/);
+      var argListLength = qc.int.between(0,50)(50);
+      // Randomly generate valid arguments to append to the argument list.
+      for(var i = 0; i < argListLength; i++) {
+          var argTypeId = qc.int.between(0,6)(6);
+          switch(argTypeId) {
+              case 0:
+                  // append integer literal
+                  argList = argList + qc.int.between(0, 10000)(10000) + ' ';
+                  break;
+              case 1:
+                  // append true boolean literal
+                  argList = argList + 'true ';
+                  break;
+              case 2:
+                  // append false boolean literal
+                  argList = argList + 'false ';
+                  break;
+              case 3:
+                  // append null literal
+                  argList = argList + 'null ';
+                  break;
+              case 4:
+                  // append string literal wrapped in double quotes
+                  argList = argList + '"' + stringLiteralRegex(qc.int.between(0, 10)(10)) + '" ';
+                  break;
+              case 5:
+                  // append string literal wrapped in single quotes
+                  argList = argList + "'" + stringLiteralRegex(qc.int.between(0, 10)(10)) + "' ";
+                  break;
+          }
+      }
+      // Return an object containing our generated argument list along with the 
+      // actual argument length that should match the output array length of parseRawArgumentList().
+      return {
+          rawArgList: argList,
+          argListSize: argListLength
+      };
+  }
+  
   it("should correctly parse a list of a varying number of arguments", function() {
-         // TODO algebraic testing here!
+      expect(function(validArgumentList) { 
+          var parsedArgumentList = toffle.parseRawArgumentList(validArgumentList.rawArgList);
+          return parsedArgumentList.length == validArgumentList.argListSize;
+      }).forAll(validRawArgumentLists);
   });
   
   describe("when processing strings", function() {

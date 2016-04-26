@@ -17,6 +17,7 @@ module.exports = function(config) {
     files: [
       'toffle.js',
       'jasmine-ieee829-decorator.js',
+      'quick-check.js',
       'toffle-jasmine-specs/*.js'
     ],
 
