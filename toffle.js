@@ -957,8 +957,6 @@ toffle.compileTemplate = function(template, initialTemplate, pendingTemplates, t
 
     // Variable to store template content.
     var content = "";
-    
-    var op = false;
 
     // Tokenise our template
     for (var i = 0; i < (currentTemplate.templateString.length); i++) {
