@@ -232,4 +232,29 @@ describe("Template Execution", function() {
       var result = preProcessedTemplate.go(testInputContext);
       expect(result).toEqual(testInputContext.testArray[0].val + testInputContext.testArray[2].val);
   });
+  
+  it("generates expected ouptut when evaluating a template which references another template", function() {
+      var initialTemplateContent = "INITIAL_TEMPLATE_CONTENT";
+      var subTemplateContent = "SUB_TEMPLATE_CONTENT";
+      // We must append our two template HTML elements to the DOM. First the inital template...
+      var templateDiv = document.createElement("div");
+      templateDiv.innerHTML = '<script id="FuncTestTemplateWithPLUG" type="text/toffle-template">' +
+        initialTemplateContent + '<^ plug FuncTestReferencedTemplate ^></script>';
+      document.body.appendChild(templateDiv);
+      // ...and then the template we will be referencing
+      templateDiv = document.createElement("div");
+      templateDiv.innerHTML = '<script id="FuncTestReferencedTemplate" type="text/toffle-template">' +
+        subTemplateContent +'</script>';
+      document.body.appendChild(templateDiv);
+      // Get our initial template.
+      var initialTemplate = document.getElementById('FuncTestTemplateWithPLUG');
+      // Pre-process our initial template.
+      var preProcessedTemplate = toffle.template({
+            template: initialTemplate
+      });
+      // Evaluate our template, passing our test context. We expect the correct interpolated output. This
+      // would be the content of the initial template concatenated with that of the referenced template.
+      var result = preProcessedTemplate.go({});
+      expect(result).toEqual(initialTemplateContent + subTemplateContent);
+  });
 });
