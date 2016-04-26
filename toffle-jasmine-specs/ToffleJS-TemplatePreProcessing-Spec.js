@@ -1,4 +1,4 @@
-describe("Template Pre-compilation", function() {
+describe("Template Pre-processing", function() {
     
   it("works correctly when processing an individual empty template", function() {
       // We must append our template HTML element to the DOM.
