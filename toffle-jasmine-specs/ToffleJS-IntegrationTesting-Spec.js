@@ -62,11 +62,63 @@ describe("Template Pre-compilation", function() {
   });
   
   it("works correctly when processing an individual template with an IF token", function() {
-      
+      var testCnd = "CONDITION";
+      var testCnt = "CONTENT";
+      // We must append our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      var tmp = '<script id="TemplateWithIF" type="text/toffle-template">' +
+        '<^ if ' + testCnd + ' ^>' + testCnt + '<^/^></script>';
+      templateDiv.innerHTML = tmp;
+      document.body.appendChild(templateDiv);
+      // Get our template from the DOM
+      var templateWithIf = document.getElementById('TemplateWithIF');
+      var precompiledTemplatesList = [];
+      // Attempt to pre-compile the empty template.
+      toffle.compileTemplate(templateWithIf, true, [], precompiledTemplatesList);
+      // We are expecting a single precompiled template.
+      expect(precompiledTemplatesList.length).toBe(1);
+      expect(precompiledTemplatesList[0].name).toEqual("TemplateWithIF");
+      // We need to check the actual AST of our template to ensure its structure is valid.
+      var templateAST = precompiledTemplatesList[0].temp.AST;
+      // We should have only one token in the root our our AST, our IF token.
+      expect(templateAST.tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].type).toEqual("if");
+      expect(templateAST.tokens[0].condition).toEqual(testCnd);
+      // Our IF token should be wrapping a content token that represnts the static content
+      // wrapped by the IF construct in our template.
+      expect(templateAST.tokens[0].tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].tokens[0].type).toEqual("content");
+      expect(templateAST.tokens[0].tokens[0].value).toEqual(testCnt);
   });
   
   it("works correctly when processing an individual template with a NOT token", function() {
-      
+      var testCnd = "CONDITION";
+      var testCnt = "CONTENT";
+      // We must append our template HTML element to the DOM.
+      var templateDiv = document.createElement("div");
+      var tmp = '<script id="TemplateWithNOT" type="text/toffle-template">' +
+        '<^ not ' + testCnd + ' ^>' + testCnt + '<^/^></script>';
+      templateDiv.innerHTML = tmp;
+      document.body.appendChild(templateDiv);
+      // Get our template from the DOM
+      var templateWithNot = document.getElementById('TemplateWithNOT');
+      var precompiledTemplatesList = [];
+      // Attempt to pre-compile the empty template.
+      toffle.compileTemplate(templateWithNot, true, [], precompiledTemplatesList);
+      // We are expecting a single precompiled template.
+      expect(precompiledTemplatesList.length).toBe(1);
+      expect(precompiledTemplatesList[0].name).toEqual("TemplateWithNOT");
+      // We need to check the actual AST of our template to ensure its structure is valid.
+      var templateAST = precompiledTemplatesList[0].temp.AST;
+      // We should have only one token in the root our our AST, our NOT token.
+      expect(templateAST.tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].type).toEqual("not");
+      expect(templateAST.tokens[0].condition).toEqual(testCnd);
+      // Our NOT token should be wrapping a content token that represnts the static content
+      // wrapped by the NOT construct in our template.
+      expect(templateAST.tokens[0].tokens.length).toEqual(1);
+      expect(templateAST.tokens[0].tokens[0].type).toEqual("content");
+      expect(templateAST.tokens[0].tokens[0].value).toEqual(testCnt);
   });
   
   it("works correctly when processing an individual template with an EACH token", function() {
@@ -85,7 +137,6 @@ describe("Template Pre-compilation", function() {
 function populateDOMWithTemplateDefinitions() {
   var templateContainer = document.createElement("div");
   templateContainer.innerHTML = '<script id="EmptyTemplateWithArg" type="text/toffle-template" data-params="arg1"></script>' +
-    '<script id="TemplateWithIF" type="text/toffle-template"><^ if trueCondition ^>CONTENT<^/^></script>' +
     '<script id="TemplateWithNOT" type="text/toffle-template"><^ not falseCondition ^>CONTENT<^/^></script>' +
     '<script id="TemplateWithEACH" type="text/toffle-template"><^ each x in someJSONArray ^>CONTENT<^/^></script>' +
     '<script id="TemplateWithMATCH" type="text/toffle-template"><^ match x in ??helper someJSONArray ^>CONTENT<^/^></script>' +
