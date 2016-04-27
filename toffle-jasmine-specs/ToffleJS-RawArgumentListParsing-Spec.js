@@ -10,7 +10,7 @@ describe("Raw Argument List Parsing", function() {
   
   function validRawArgumentLists(size) {
       var argList = "";
-      var stringLiteralRegex = qc.string.matching(/^[a-zA-Z]+$/);
+      var stringLiteralRegex = qc.string.matching(/^[a-zA-Z0-9_ @]+$/);
       var argListLength = qc.int.between(0,50)(50);
       // Randomly generate valid arguments to append to the argument list.
       for(var i = 0; i < argListLength; i++) {
@@ -34,11 +34,18 @@ describe("Raw Argument List Parsing", function() {
                   break;
               case 4:
                   // append string literal wrapped in double quotes
-                  argList = argList + '"' + stringLiteralRegex(qc.int.between(0, 10)(10)) + '" ';
+                  var generatedStringLiteral = stringLiteralRegex(qc.int.between(0, 50)(50));
+                  // Let's replace any '@' charaters with an escaped double quote. 
+                  generatedStringLiteral = generatedStringLiteral.replace("@", '\\"');
+                  argList = argList + '"' + generatedStringLiteral + '" ';
                   break;
               case 5:
                   // append string literal wrapped in single quotes
-                  argList = argList + "'" + stringLiteralRegex(qc.int.between(0, 10)(10)) + "' ";
+                  
+                  var generatedStringLiteral = stringLiteralRegex(qc.int.between(0, 50)(50));
+                  // Let's replace any '@' charaters with an escaped single quote. 
+                  generatedStringLiteral = generatedStringLiteral.replace("@", "\\'");
+                  argList = argList + "'" + generatedStringLiteral + "' ";
                   break;
           }
       }
